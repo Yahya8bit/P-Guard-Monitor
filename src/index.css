@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Semantic theme tokens — values verbatim from CLAUDE.md.
+   Tailwind colors (tailwind.config.js) point at these vars, so flipping
+   <html data-theme> re-themes the whole app with no class changes. */
+:root[data-theme='dark'] {
+  --bg: #0f1416;
+  --surface: #161d1f;
+  --surface-2: #1e2629;
+  --border: #2a3338;
+  --text: #e6ebea;
+  /* POLISH 2: muted lightened #8a9794 -> #a6b1ae (one step brighter) so captions
+     read comfortably on the dark surfaces. */
+  --text-muted: #a6b1ae;
+  --accent: #12b3a6; /* brighter teal pops on dark */
+  --accent-press: #00a090;
+  --success: #2ecc9a;
+  --warning: #e0a030;
+  --danger: #e5484d;
+  /* layered backdrop tints (anti-generic: stacked radial gradients) */
+  --glow-a: rgba(18, 179, 166, 0.1);
+  --glow-b: rgba(91, 122, 134, 0.08);
+}
+
+:root[data-theme='light'] {
+  --bg: #f4f6f6;
+  --surface: #ffffff;
+  --surface-2: #eef2f1;
+  --border: #dce3e1;
+  --text: #1a2426;
+  /* POLISH 2: light theme muted nudged #5e6e6b -> #6d7d7a (one step lighter);
+     stays ~4.7:1 on white = still AA-readable. */
+  --text-muted: #6d7d7a;
+  --accent: #00a090; /* deeper teal reads better on white */
+  --accent-press: #008575;
+  --success: #1fa97f;
+  --warning: #c2851c;
+  --danger: #d43a3f;
+  --glow-a: rgba(0, 160, 144, 0.08);
+  --glow-b: rgba(91, 122, 134, 0.06);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    /* Stacked radial gradients for atmosphere instead of a flat fill. */
+    background-image:
+      radial-gradient(60rem 60rem at 85% -10%, var(--glow-a), transparent 70%),
+      radial-gradient(50rem 50rem at -10% 110%, var(--glow-b), transparent 70%);
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  /* surface hierarchy: base bg -> surface -> elevated */
+  .surface-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    /* layered, color-tinted shadow at low opacity (no flat shadow-md) */
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.18),
+      0 8px 24px -12px rgba(0, 0, 0, 0.35);
+  }
+
+  /* Shared style for KPI card secondary lines ("compared to what" context).
+     One token so every card's sub-text matches; tune size/color here. */
+  .card-subtext {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .btn-accent {
+    background-color: var(--accent);
+    color: #04201d;
+    border-radius: 8px;
+    font-weight: 600;
+    transition:
+      transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+      background-color 0.18s ease;
+  }
+  .btn-accent:hover {
+    background-color: var(--accent-press);
+  }
+  .btn-accent:active {
+    transform: translateY(1px);
+  }
+  .btn-accent:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
