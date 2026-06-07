@@ -5,10 +5,27 @@ import { useAuth } from '../auth/AuthContext';
 import { landingPath } from '../auth/guards';
 import { ThemeToggle } from '../components/ThemeToggle';
 
-const DEMO = [
-  { email: 'ops@enova.local', role: 'Superadmin — toute la flotte' },
-  { email: 'admin@enova.local', role: 'Admin — robots assignés' },
-  { email: 'client@site.tn', role: 'Client — un robot' },
+// Demo accounts as role cards (icon + role + one-line description). Clicking one
+// prefills its credentials and submits immediately.
+const ROLES = [
+  {
+    role: 'Superadmin',
+    email: 'ops@enova.local',
+    desc: 'Toute la flotte · attribution des robots',
+    icon: 'M3 21h18M5 21V7l8-4v18M19 21V11l-6-3M9 9h.01M9 13h.01M9 17h.01',
+  },
+  {
+    role: 'Admin',
+    email: 'admin@enova.local',
+    desc: 'Robots assignés · détail complet',
+    icon: 'M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6l8-4z',
+  },
+  {
+    role: 'Client',
+    email: 'client@site.tn',
+    desc: 'Un seul robot · résultats',
+    icon: 'M16 21v-2a4 4 0 00-8 0v2M12 11a4 4 0 100-8 4 4 0 000 8z',
+  },
 ];
 
 export function Login() {
@@ -19,12 +36,11 @@ export function Login() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
+  const doLogin = async (mail: string, pass: string) => {
     setBusy(true);
     setError(null);
     try {
-      const user = await login(email, password);
+      const user = await login(mail, pass);
       navigate(landingPath(user), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Échec de connexion');
@@ -33,74 +49,125 @@ export function Login() {
     }
   };
 
-  return (
-    <div className="relative grid min-h-screen place-items-center p-4">
-      <div className="absolute right-4 top-4">
-        <ThemeToggle />
-      </div>
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    doLogin(email, password);
+  };
 
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex flex-col items-center text-center">
-          <img src="/logo.png" alt="P-Guard" className="mb-3 h-12 w-12 rounded-card" />
-          <h1 className="text-2xl">P-Guard Monitor</h1>
-          <p className="mt-1 text-sm text-muted">Supervision de la flotte de patrouille</p>
+  // role card click: prefill the fields (so they're visible) AND sign in
+  const pickRole = (mail: string) => {
+    setEmail(mail);
+    setPassword('demo');
+    doLogin(mail, 'demo');
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col lg:flex-row">
+      {/* LEFT — branded image panel (top banner on narrow, 55% on wide).
+          login-bg gradient sits behind as a fallback if the image fails. */}
+      <aside className="login-bg relative h-44 shrink-0 overflow-hidden lg:h-auto lg:w-[55%]">
+        <img src="/pguard.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+        {/* subtle extra darkening for text legibility (image has a baked gradient) */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-black/30" />
+
+        {/* top-left brand — dark scrim pill + drop-shadows so the transparent
+            mark and white text stay legible over the bright/busy photo */}
+        <div className="absolute left-6 top-6 flex items-center gap-3 rounded-xl bg-black/35 px-3 py-2 backdrop-blur-sm">
+          <img
+            src="/logo-transparent.png"
+            alt=""
+            className="h-11 w-11 object-contain [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.6))]"
+          />
+          <span className="text-[18px] font-semibold tracking-tight text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
+            P-Guard <span className="text-accent">Monitor</span>
+          </span>
         </div>
 
-        <form onSubmit={submit} className="surface-card p-6">
-          <label className="mb-1 block text-sm text-muted" htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="username"
-            className="mb-4 w-full rounded-btn border border-border bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent focus-visible:ring-1 focus-visible:ring-accent"
-          />
+        {/* bottom-left headline (hidden on the short narrow banner) */}
+        <div className="absolute bottom-8 left-6 right-6 hidden max-w-xl lg:block">
+          <h2 className="text-3xl font-semibold leading-tight tracking-tight text-white">
+            Console de supervision pour robots autonomes de sécurité
+          </h2>
+          <p className="mt-3 text-base text-white/80">
+            Supervision temps réel et analyse des rondes — Enova Robotics.
+          </p>
+        </div>
+      </aside>
 
-          <label className="mb-1 block text-sm text-muted" htmlFor="password">
-            Mot de passe
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            className="mb-4 w-full rounded-btn border border-border bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent focus-visible:ring-1 focus-visible:ring-accent"
-          />
+      {/* RIGHT — form panel */}
+      <main className="relative flex flex-1 items-center justify-center bg-bg p-6 sm:p-10">
+        <div className="absolute right-4 top-4">
+          <ThemeToggle />
+        </div>
 
-          {error && (
-            <p className="mb-4 rounded-btn border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-              {error}
+        <div className="w-full max-w-sm">
+          <h1 className="text-2xl font-semibold tracking-tight">Connexion</h1>
+          <p className="mt-1 text-sm text-muted">Accédez à votre console P-Guard Monitor.</p>
+
+          <form onSubmit={submit} className="mt-6">
+            <label className="mb-1 block text-sm text-muted" htmlFor="email">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username"
+              className="mb-4 w-full rounded-btn border border-border bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent focus-visible:ring-1 focus-visible:ring-accent"
+            />
+
+            <label className="mb-1 block text-sm text-muted" htmlFor="password">
+              Mot de passe
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              className="mb-4 w-full rounded-btn border border-border bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent focus-visible:ring-1 focus-visible:ring-accent"
+            />
+
+            {error && (
+              <p className="mb-4 rounded-btn border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
+                {error}
+              </p>
+            )}
+
+            <button type="submit" disabled={busy} className="btn-accent w-full px-4 py-2.5 disabled:opacity-60">
+              {busy ? 'Connexion…' : 'Se connecter'}
+            </button>
+          </form>
+
+          <div className="mt-6">
+            <p className="mb-2 text-xs text-muted">
+              Comptes démo (mot de passe&nbsp;: <code className="text-text">demo</code>) — cliquez pour entrer
             </p>
-          )}
-
-          <button type="submit" disabled={busy} className="btn-accent w-full px-4 py-2.5 disabled:opacity-60">
-            {busy ? 'Connexion…' : 'Se connecter'}
-          </button>
-        </form>
-
-        <div className="mt-4 text-center text-xs text-muted">
-          <p className="mb-2">Comptes démo (mot de passe&nbsp;: <code className="text-text">demo</code>)</p>
-          <div className="flex flex-col gap-1.5">
-            {DEMO.map((d) => (
-              <button
-                key={d.email}
-                type="button"
-                onClick={() => {
-                  setEmail(d.email);
-                  setPassword('demo');
-                }}
-                className="rounded-btn border border-border px-3 py-1.5 text-left transition-colors hover:border-accent hover:text-text"
-              >
-                <span className="font-medium text-text">{d.email}</span> — {d.role}
-              </button>
-            ))}
+            <div className="flex flex-col gap-2">
+              {ROLES.map((r) => (
+                <button
+                  key={r.email}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => pickRole(r.email)}
+                  className="surface-card flex items-center gap-3 p-3 text-left transition-colors hover:border-accent disabled:opacity-60"
+                >
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-btn bg-surface-2 text-accent">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d={r.icon} strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium">{r.role}</span>
+                    <span className="block truncate text-xs text-muted">{r.desc}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

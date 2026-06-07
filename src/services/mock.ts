@@ -427,6 +427,27 @@ function distanceByDay(robotId: string): number[] {
   return arr;
 }
 
+// Total minutes of completed (Automatic_end) rounds per day. Each completed
+// round gets a seeded 45–95 min duration from the ':dur' stream (independent of
+// the main series, so existing values are untouched). Memoized per robot so a
+// given day's total is stable across period windows. The "Durée moyenne de
+// ronde" tile divides the period sum by the SAME completed-round count that
+// feeds the donut/charts → consistent.
+const durCache = new Map<string, number[]>();
+function roundMinutesByDay(robotId: string): number[] {
+  const cached = durCache.get(robotId);
+  if (cached) return cached;
+  const rows = buildSeries(robotId);
+  const rnd = rngFor(robotId + ':dur');
+  const arr = rows.map((r) => {
+    let m = 0;
+    for (let i = 0; i < r.completed; i++) m += 45 + Math.floor(rnd() * 51); // 45..95 min
+    return m;
+  });
+  durCache.set(robotId, arr);
+  return arr;
+}
+
 // Group the sliced day-indices into buckets by granularity, with a label each.
 function bucketIndices(dates: string[], gran: Granularity): { label: string; rows: number[] }[] {
   if (gran === 'monthly') {
@@ -479,6 +500,7 @@ export interface StatsBundle {
     dockingSucc: number;
     dockingTotal: number;
     distanceKm: number;
+    avgRoundMin: number; // avg completed-round duration (minutes)
   };
   roundsSuccess: { label: string; completed: number; interrupted: number }[];
   emergency: { label: string; value: number }[];
@@ -520,6 +542,12 @@ export function getStatistics(robotId: string, days: RangeDays, gran: Granularit
   const dockingFail = Math.round(dockingSucc * 0.06); // modeled failed attempts (~6%)
   const dockingTotal = dockingSucc + dockingFail;
   const distanceKm = Math.round(distance.reduce((a, b) => a + b.value, 0)); // === Σ bars
+  // Durée moyenne de ronde = Σ completed-round minutes / completed count (same
+  // `completed` that drives the donut), over the selected period.
+  const totalMin = roundMinutesByDay(robotId)
+    .slice(-days)
+    .reduce((a, b) => a + b, 0);
+  const avgRoundMin = completed ? Math.round(totalMin / completed) : 0;
 
   return {
     summary: {
@@ -531,6 +559,7 @@ export function getStatistics(robotId: string, days: RangeDays, gran: Granularit
       dockingSucc,
       dockingTotal,
       distanceKm,
+      avgRoundMin,
     },
     roundsSuccess,
     emergency,

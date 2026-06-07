@@ -18,14 +18,22 @@
   --accent-press: #00a090;
   --success: #2ecc9a;
   --warning: #e0a030;
-  --danger: #e5484d;
+  --danger: #ff3b3b; /* more saturated alert red (dark) */
+  /* danger-tinted fill for the alert-emphasis card (legible with --text on dark) */
+  --danger-tint: rgba(229, 72, 77, 0.16);
   /* layered backdrop tints (anti-generic: stacked radial gradients) */
   --glow-a: rgba(18, 179, 166, 0.1);
   --glow-b: rgba(91, 122, 134, 0.08);
+  /* card lift — dark uses deeper shadow (unchanged) */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.18), 0 8px 24px -12px rgba(0, 0, 0, 0.35);
+  --card-radius: 14px;
+  /* login backdrop: noticeable teal→charcoal diagonal (dark) */
+  --login-gradient: linear-gradient(135deg, #0d7a6f 0%, #0d3b37 42%, #0b1315 100%);
 }
 
 :root[data-theme='light'] {
-  --bg: #f4f6f6;
+  /* subtle light-gray page bg so the pure-white cards read as distinct surfaces */
+  --bg: #e9eded;
   --surface: #ffffff;
   --surface-2: #eef2f1;
   --border: #dce3e1;
@@ -37,9 +45,19 @@
   --accent-press: #008575;
   --success: #1fa97f;
   --warning: #c2851c;
-  --danger: #d43a3f;
+  --danger: #e11d1d; /* more saturated alert red (light) */
+  /* lighter wash on white so --text stays readable */
+  --danger-tint: rgba(212, 58, 63, 0.1);
   --glow-a: rgba(0, 160, 144, 0.08);
   --glow-b: rgba(91, 122, 134, 0.06);
+  /* SaaS polish (light only): soft, diffuse float; rounder cards; teal icon-chip
+     tint; warm-gray labels. */
+  --shadow-card: 0 1px 3px rgba(16, 24, 40, 0.04), 0 12px 28px -6px rgba(16, 24, 40, 0.12);
+  --card-radius: 16px;
+  --accent-tint: rgba(0, 160, 144, 0.12);
+  --label-warm: #6f6a64;
+  /* login backdrop: soft but clearly-present teal tint → gray (light) */
+  --login-gradient: linear-gradient(135deg, #a7ddd6 0%, #d4e7e4 45%, #eef2f1 100%);
 }
 
 @layer base {
@@ -73,11 +91,10 @@
   .surface-card {
     background-color: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    /* layered, color-tinted shadow at low opacity (no flat shadow-md) */
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.18),
-      0 8px 24px -12px rgba(0, 0, 0, 0.35);
+    /* per-theme radius (dark 14px, light 16px) */
+    border-radius: var(--card-radius);
+    /* per-theme card lift (dark: deep, light: soft) so cards stand off the bg */
+    box-shadow: var(--shadow-card);
   }
 
   /* Shared style for KPI card secondary lines ("compared to what" context).
@@ -86,6 +103,88 @@
     color: var(--text-muted);
     font-size: 13px;
     line-height: 1.35;
+  }
+
+  /* Alert-emphasis for a KPI card: danger-tinted FILL + danger border (same 1px
+     width as surface-card, so no size change). Defined after .surface-card so it
+     wins on equal specificity. Text uses the normal tokens and stays legible on
+     the low-opacity tint in both themes. */
+  .kpi-alert {
+    background-color: var(--danger-tint);
+    border-color: var(--danger);
+  }
+
+  /* KPI icon chip — DARK: inert, just tints the bare 22px icon (unchanged).
+     LIGHT: a 36px rounded tinted square in the metric's tone (teal / danger). */
+  .kpi-chip {
+    color: var(--text-muted);
+  }
+  :root[data-theme='light'] .kpi-chip {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+  :root[data-theme='light'] .kpi-chip[data-tone='teal'] {
+    background: var(--accent-tint);
+    color: var(--accent);
+  }
+  :root[data-theme='light'] .kpi-chip[data-tone='danger'] {
+    background: var(--danger-tint);
+    color: var(--danger);
+  }
+
+  /* light-only type: values bold + dark (charcoal), labels in a warm gray */
+  :root[data-theme='light'] .kpi-value {
+    color: var(--text);
+  }
+  :root[data-theme='light'] .kpi-label {
+    color: var(--label-warm);
+  }
+
+  /* LIGHT-ONLY saturated KPI tiles (reference.png): solid teal-depth / red fill,
+     white text + value, translucent white icon chip, rounder + softer shadow.
+     Teal family only (varied depth for rhythm) + danger red. None of these
+     [data-theme='light'] rules apply in dark, so dark stays exactly as is.
+     Fill depths are deep enough that white text stays ≥4.5:1 legible. */
+  :root[data-theme='light'] .surface-card[data-fill] {
+    border-color: transparent;
+    border-radius: 18px;
+    padding: 28px;
+    color: #ffffff;
+    box-shadow:
+      0 2px 6px rgba(16, 24, 40, 0.08),
+      0 18px 36px -10px rgba(16, 24, 40, 0.22);
+  }
+  :root[data-theme='light'] .surface-card[data-fill='deep'] { background: #0a5f57; }
+  :root[data-theme='light'] .surface-card[data-fill='mid'] { background: #0c7468; }
+  :root[data-theme='light'] .surface-card[data-fill='soft'] { background: #0f8579; }
+  :root[data-theme='light'] .surface-card[data-fill='muted'] { background: #51736e; }
+  :root[data-theme='light'] .surface-card[data-fill='danger'] { background: #c81e1e; }
+  :root[data-theme='light'] .surface-card[data-fill='danger-calm'] { background: #8c5a5a; }
+  /* white text on the fill */
+  :root[data-theme='light'] .surface-card[data-fill] .kpi-label,
+  :root[data-theme='light'] .surface-card[data-fill] .kpi-value {
+    color: #ffffff;
+  }
+  :root[data-theme='light'] .surface-card[data-fill] .card-subtext,
+  :root[data-theme='light'] .surface-card[data-fill] .kpi-note {
+    color: rgba(255, 255, 255, 0.82);
+  }
+  :root[data-theme='light'] .surface-card[data-fill] .kpi-delta {
+    color: rgba(255, 255, 255, 0.92);
+  }
+  /* icon chip: subtle translucent white square on the fill */
+  :root[data-theme='light'] .surface-card[data-fill] .kpi-chip {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+  }
+
+  /* Login backdrop: a clearly-visible branded teal→charcoal diagonal gradient
+     (per theme via --login-gradient), not a faint wash. */
+  .login-bg {
+    background: var(--login-gradient);
   }
 
   .btn-accent {

@@ -27,9 +27,9 @@ export default {
         btn: '8px',
       },
       spacing: {
-        // SCALE-UP: single source for card padding (p-card). 20px -> 24px makes
-        // every surface card feel bigger; tune here to adjust all cards at once.
-        card: '24px',
+        // single source for card padding (p-card). 28px = airier internal
+        // breathing room (reference). Tune here to adjust all cards at once.
+        card: '28px',
       },
     },
   },

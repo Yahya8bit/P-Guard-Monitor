@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ActivityHeatmap } from '../components/stats/ActivityHeatmap';
+import { MissionDonut } from '../components/stats/MissionDonut';
 import { Section } from '../components/stats/Section';
 import { SimpleBars } from '../components/stats/SimpleBars';
 import { StackedRoundsChart } from '../components/stats/StackedRoundsChart';
@@ -20,6 +21,13 @@ const RANGES: { key: RangeDays; label: string }[] = [
   { key: 30, label: '30 j' },
   { key: 90, label: '90 j' },
 ];
+
+// Minutes → "1 h 12 min" / "47 min".
+function formatDuration(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return h > 0 ? `${h} h ${m} min` : `${m} min`;
+}
 
 // Reusable segmented control for the filter bar.
 function Segmented<T extends string | number>({
@@ -69,7 +77,7 @@ export function Statistiques() {
   const s = data.summary;
 
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="flex w-full flex-col gap-6">
       {/* 1. Filter bar */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
@@ -83,11 +91,14 @@ export function Statistiques() {
       </div>
 
       {/* 2. Summary tiles — derived from the series below */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        {/* "Taux de réussite des missions" removed — the donut is now the single
+            source for mission success. New metric here: avg completed-round
+            duration (mock getStatistics → summary.avgRoundMin). */}
         <StatTile
-          label="Taux de réussite des missions"
-          value={`${s.missionRate}%`}
-          sub={`${s.completed} terminées / ${s.total} totales`}
+          label="Durée moyenne de ronde"
+          value={formatDuration(s.avgRoundMin)}
+          sub="Rondes terminées (Automatic_end)"
         />
         <StatTile label="Arrêts d'urgence" value={s.emergencyStops} sub="Emergency_pressed (sur la plage)" />
         <StatTile
@@ -98,13 +109,26 @@ export function Statistiques() {
         <StatTile label="Distance totale" value={`${s.distanceKm} km`} sub="Cumul sur la plage" />
       </div>
 
-      {/* 3. Réussite des rondes (stacked) */}
-      <Section title="Réussite des rondes" subtitle="Terminées (Automatic_end) vs interrompues (Emergency_pressed)">
-        <StackedRoundsChart data={data.roundsSuccess} />
-      </Section>
+      {/* 3. Mission completion — composition (donut) beside over-time (stacked).
+          The donut, the stacked bars AND the "Taux de réussite des missions" tile
+          all read from the SAME source (StatsBundle.summary / roundsSuccess), so
+          they never disagree for the selected period. */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <Section title="Composition des missions" subtitle="Part terminées vs interrompues">
+          <MissionDonut
+            completed={s.completed}
+            interrupted={s.emergencyStops}
+            total={s.total}
+            rate={s.missionRate}
+          />
+        </Section>
+        <Section title="Réussite des rondes" subtitle="Terminées (Automatic_end) vs interrompues (Emergency_pressed)">
+          <StackedRoundsChart data={data.roundsSuccess} />
+        </Section>
+      </div>
 
       {/* 4 + 5 side by side on wide screens */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Section title="Arrêts d'urgence" subtitle="Événements Emergency_pressed dans le temps">
           <SimpleBars data={data.emergency} color="var(--danger)" name="Arrêts d'urgence" />
         </Section>
@@ -119,7 +143,7 @@ export function Statistiques() {
       </Section>
 
       {/* 7 + 8 stubs — clearly labelled, no fabricated values */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <StubCard title="Taux d'autonomie (autonome vs téléopéré)" message="À venir — schéma Teleoperation à analyser" />
         <StubCard title="Trajet de patrouille (GPS)" message="À venir — carte" />
       </div>

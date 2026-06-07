@@ -18,6 +18,15 @@ import type { Alert, BatterySample, DashboardSummary, Period, Robot, TrendSeries
 
 type Breakdown = { obstacles: number; emergencyStops: number; total: number };
 
+// Generic, reusable alert rule: a card is emphasized when its value crosses a
+// threshold in the BAD direction for its sentiment. "higher-worse" alerts above
+// the threshold; "higher-better" would alert below it. Wired for Incidents now,
+// but the same helper could later flag low battery / low availability, etc.
+function isAlert(sentiment: 'higher-better' | 'higher-worse', value: number, threshold: number): boolean {
+  return sentiment === 'higher-worse' ? value > threshold : value < threshold;
+}
+const INCIDENT_ALERT_THRESHOLD = 5; // mock threshold: > 5 incidents/période = attention
+
 // Per-metric chart config: which KPI the trend chart shows when its card is
 // clicked (CHANGE A). Title/subtitle/color all switch with the selection.
 const METRICS: Record<TrendMetric, { title: string; subtitle: string; color: string }> = {
@@ -103,7 +112,7 @@ export function Dashboard() {
   // Full-width column, natural content height (status bar + KPI row + compact
   // chart + alerts strip); the shell's <main> scrolls if it overflows.
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="flex w-full flex-col gap-6">
       <StatusBar robot={robot} />
 
       {/* KPI sentiment (drives the delta-badge color in KpiCard):
@@ -115,7 +124,7 @@ export function Dashboard() {
           align-items:stretch makes every card the height of the tallest one
           (Incidents, with its extra caption line), so all five are identical
           rectangles regardless of content. */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <BatteryCard battery={summary.status.battery} />
         <KpiCard
           label="Rondes effectuées"
@@ -124,8 +133,8 @@ export function Dashboard() {
           sentiment="higher-better"
           subtext={`Total période : ${k.rounds.value} · ~${roundsPerDay}/jour`}
           icon="M3 7l9-4 9 4-9 4zM3 7v10l9 4 9-4V7"
+          fill="mid"
           onSelect={() => setMetric('rounds')}
-          active={metric === 'rounds'}
         />
         <KpiCard
           label="Incidents détectés"
@@ -135,8 +144,10 @@ export function Dashboard() {
           subtext={`${breakdown.obstacles} obstacles · ${breakdown.emergencyStops} arrêts d'urgence`}
           note="≠ détections de sécurité"
           icon="M12 3l9 16H3zM12 10v4M12 17h.01"
+          tone="danger"
+          fill={isAlert('higher-worse', k.incidents.value, INCIDENT_ALERT_THRESHOLD) ? 'danger' : 'danger-calm'}
           onSelect={() => setMetric('incidents')}
-          active={metric === 'incidents'}
+          emphasized={isAlert('higher-worse', k.incidents.value, INCIDENT_ALERT_THRESHOLD)}
         />
         <KpiCard
           label="Cycles de charge"
@@ -145,8 +156,8 @@ export function Dashboard() {
           sentiment="neutral"
           subtext={dockBatteryAvg !== null ? `Batt. moy. au dock : ~${dockBatteryAvg}%` : undefined}
           icon="M13 2L4 14h6l-1 8 9-12h-6z"
+          fill="soft"
           onSelect={() => setMetric('charges')}
-          active={metric === 'charges'}
         />
         <KpiCard
           label="Disponibilité"
@@ -155,19 +166,23 @@ export function Dashboard() {
           subtext="Formule à définir (TODO)"
           note="non dérivable des logs pour l'instant"
           icon="M12 8v4l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          fill="muted"
         />
       </div>
 
-      <TrendChart
-        series={trend}
-        period={period}
-        onPeriod={setPeriod}
-        title={METRICS[metric].title}
-        subtitle={METRICS[metric].subtitle}
-        color={METRICS[metric].color}
-      />
-
-      <AlertsStrip robotId={id} alerts={alerts} />
+      {/* balanced two-column rhythm (reference pairs two bottom panels): trend
+          chart | alerts side by side on wide screens, stacked on narrow. */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <TrendChart
+          series={trend}
+          period={period}
+          onPeriod={setPeriod}
+          title={METRICS[metric].title}
+          subtitle={METRICS[metric].subtitle}
+          color={METRICS[metric].color}
+        />
+        <AlertsStrip robotId={id} alerts={alerts} />
+      </div>
     </div>
   );
 }
