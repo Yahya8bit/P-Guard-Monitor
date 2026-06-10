@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { ErrorBoundary } from './ErrorBoundary';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
@@ -56,7 +57,9 @@ export function AppShell() {
         {/* flex-1 fills the height under the top bar; min-h-0 lets inner flex
             children shrink; content scrolls here if it exceeds the viewport. */}
         <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

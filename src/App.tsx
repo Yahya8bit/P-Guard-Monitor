@@ -5,7 +5,10 @@ import { AppShell } from './components/AppShell';
 import { Dashboard } from './pages/Dashboard';
 import { Fleet } from './pages/Fleet';
 import { Login } from './pages/Login';
-import { Placeholder } from './pages/Placeholder';
+import { Alertes } from './pages/Alertes';
+import { Gestion } from './pages/Gestion';
+import { Parametres } from './pages/Parametres';
+import { Rapports } from './pages/Rapports';
 import { Statistiques } from './pages/Statistiques';
 
 // Send "/" to the right place: the user's landing page if logged in, else login.
@@ -44,9 +47,9 @@ export default function App() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="statistiques" element={<Statistiques />} />
-        <Route path="alertes" element={<Placeholder title="Alertes" />} />
-        <Route path="rapports" element={<Placeholder title="Rapports" />} />
-        <Route path="parametres" element={<Placeholder title="Paramètres" />} />
+        <Route path="alertes" element={<Alertes />} />
+        <Route path="rapports" element={<Rapports />} />
+        <Route path="parametres" element={<Parametres />} />
       </Route>
 
       {/* Gestion — superadmin + admin only. */}
@@ -58,7 +61,7 @@ export default function App() {
           </RequireRole>
         }
       >
-        <Route index element={<Placeholder title="Gestion" />} />
+        <Route index element={<Gestion />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

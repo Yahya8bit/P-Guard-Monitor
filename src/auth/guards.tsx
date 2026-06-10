@@ -34,11 +34,35 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
   return <>{children}</>;
 }
 
-// Gate `/robots/:id/*` — the id must be assigned to the user (superadmin bypass).
+// Calm fallback when a robot id can't be resolved — never a blank page.
+export function RobotIntrouvable() {
+  return (
+    <div className="grid min-h-[40vh] place-items-center p-8 text-center">
+      <div>
+        <div className="text-lg font-semibold">Robot introuvable</div>
+        <p className="mt-1 text-sm text-muted">Le robot demandé n'existe pas ou ne vous est pas accessible.</p>
+        <a href="/" className="mt-4 inline-block text-sm font-medium text-accent hover:underline">
+          Retour →
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// Gate `/robots/:id/*`. Reject a missing/"undefined"/inaccessible id: recover to
+// the user's first accessible robot, else show a calm "Robot introuvable" (never
+// a white screen). Existence of an accessible-but-unknown id is handled in the
+// dashboard itself.
 export function RequireRobotAccess({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { id } = useParams();
   if (!user) return <Navigate to="/login" replace />;
-  if (!id || !canAccessRobot(user, id)) return <Navigate to={landingPath(user)} replace />;
-  return <>{children}</>;
+
+  const valid = !!id && id !== 'undefined' && canAccessRobot(user, id);
+  if (valid) return <>{children}</>;
+
+  if (user.role !== 'client') return <Navigate to="/fleet" replace />;
+  const rid = user.assignedRobotIds[0];
+  if (rid && rid !== 'undefined' && rid !== id) return <Navigate to={`/robots/${rid}/dashboard`} replace />;
+  return <RobotIntrouvable />;
 }

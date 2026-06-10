@@ -1,3 +1,39 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Commands
+
+- `npm run dev` — Vite dev server (HMR) for the app.
+- `npm run build` — typecheck (`tsc --noEmit`) then `vite build`. Build fails on any type error.
+- `npm run lint` — ESLint over the repo (flat config, `typescript-eslint` + react-hooks/react-refresh).
+- `npm run preview` — serve the production build.
+- `node serve.mjs` — static server of the project root at `http://localhost:3000` (SPA fallback to `index.html`). Used by the screenshot workflow, NOT the dev/HMR flow.
+- `node screenshot.mjs http://localhost:3000 [label]` — Puppeteer screenshot into `temporary screenshots/`.
+
+No test runner is configured — there is no `test` script and no test files. "Verification" here means `npm run build` (typecheck) + `npm run lint` + the screenshot comparison flow below.
+
+## Architecture
+
+React 18 + TS SPA (Vite). Source under `src/`. Three things drive the design and must stay in sync: the **frozen data contract**, the **deterministic mock service layer**, and the **role-based routing**.
+
+- **Data contract — `src/types/contract.ts`.** Single source of truth for every shape crossing the service boundary (`User`, `Robot`, `DashboardSummary`, `Alert`, `PatrolPath`, etc.). Frozen on purpose: the mock returns exactly these shapes so a real REST/JWT backend swaps in with zero UI change.
+
+- **Service layer — `src/services/`.** Three tiers:
+  - `api.ts` — the only thing pages import. Async functions returning contract shapes, with a small fake `delay()` so loading states are exercisable. Swap these bodies for `fetch` later; call sites don't change.
+  - `mock.ts` — deterministic data + KPI derivations. Clock is FROZEN at `NOW = 2026-06-01` over a Jun-2024→Jun-2026 span; nothing reads the wall clock. `ROBOTS`/`USERS` live here. `PG-001` is the one real unit (totals pinned to seed params in the design rules below); other units are seeded fiction. Assignment mutations (`setRobotAdmin`, `assignRobotToClient`, `addAdmin`…) mutate in-memory state.
+  - `random.ts` — `mulberry32` PRNG seeded via `hashStr`. No `Math.random` anywhere, so reloads reproduce identical numbers. Real log-derived JSON lives in `src/services/data/*.json` (`kpi_seed`, `gps_seed`).
+
+- **Auth — `src/auth/`.** `AuthContext` persists the user to `localStorage` (`pguard-user`); `restore()` is where JWT validation slots in later. `guards.tsx` holds `landingPath`, `canAccessRobot`, and the `RequireAuth`/`RequireRole`/`RequireRobotAccess` route gates. Access is enforced in BOTH routing and components — never CSS-hidden.
+
+- **Routing — `src/App.tsx`.** `/login`; `/fleet` (superadmin+admin); `/robots/:id/*` nested under `AppShell` (dashboard, statistiques, alertes, rapports, parametres); `/gestion` (superadmin+admin). Clients have no fleet view — they land directly on their one robot. Provider nesting (`src/main.tsx`): Theme → Language → Auth → BrowserRouter → App.
+
+- **Reports — `src/lib/report.ts`.** jsPDF/CSV generation reading the SAME stats source (`getStatistics`) as the dashboard/Statistiques pages, so a report matches what those pages show for the period.
+
+- **Components** split into `dashboard/` (StatusBar, KpiCard, TrendChart, BatteryCard, Alerts), `stats/` (charts + `PatrolMap` via react-leaflet), and shell (`AppShell`, `Sidebar`, `TopBar`). Theme (dark default) + Language are React contexts in `src/theme/`.
+
+---
+
 # CLAUDE.md — Frontend Website Rules
 
 ## Always Do First

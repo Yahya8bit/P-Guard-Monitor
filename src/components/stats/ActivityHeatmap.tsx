@@ -25,7 +25,7 @@ export function ActivityHeatmap({ matrix, max }: { matrix: number[][]; max: numb
                 return (
                   <div
                     key={h}
-                    title={`${DAYS[d]} ${h}h — ${count} ronde${count > 1 ? 's' : ''}`}
+                    title={`${DAYS[d]} ${h}h : ${count} ronde${count > 1 ? 's' : ''}`}
                     className="h-5 flex-1 rounded-[2px]"
                     style={{
                       backgroundColor: count === 0 ? 'var(--surface-2)' : 'var(--accent)',

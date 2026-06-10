@@ -161,6 +161,7 @@
   :root[data-theme='light'] .surface-card[data-fill='mid'] { background: #0c7468; }
   :root[data-theme='light'] .surface-card[data-fill='soft'] { background: #0f8579; }
   :root[data-theme='light'] .surface-card[data-fill='muted'] { background: #51736e; }
+  :root[data-theme='light'] .surface-card[data-fill='warning'] { background: #b45309; } /* amber alert state */
   :root[data-theme='light'] .surface-card[data-fill='danger'] { background: #c81e1e; }
   :root[data-theme='light'] .surface-card[data-fill='danger-calm'] { background: #8c5a5a; }
   /* white text on the fill */
@@ -181,10 +182,85 @@
     color: #ffffff;
   }
 
+  /* DARK saturated KPI tiles — deep-teal panels that read as distinct colored
+     cards against the near-black page bg (#0F1416, clearly darker than these),
+     with a crisp top-edge highlight + border, bright values and glowing icon
+     chips. Dark-tile fill tokens:
+       deep  #0b3b37 · mid #0e4f48 · soft #126057 · muted #28363a (calm)
+       danger #5c1a18 · danger-calm #3a2422
+     Light tiles are untouched (these rules are dark-scoped). */
+  :root[data-theme='dark'] .surface-card[data-fill] {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.09),
+      0 10px 26px -14px rgba(0, 0, 0, 0.7);
+    color: #eaf3f1;
+  }
+  :root[data-theme='dark'] .surface-card[data-fill='deep'] { background: #0b3b37; }
+  :root[data-theme='dark'] .surface-card[data-fill='mid'] { background: #0e4f48; }
+  :root[data-theme='dark'] .surface-card[data-fill='soft'] { background: #126057; }
+  :root[data-theme='dark'] .surface-card[data-fill='muted'] { background: #28363a; }
+  :root[data-theme='dark'] .surface-card[data-fill='warning'] { background: #b45309; } /* amber alert state */
+  :root[data-theme='dark'] .surface-card[data-fill='danger'] { background: #e5333b; } /* vivid alert red */
+  :root[data-theme='dark'] .surface-card[data-fill='danger-calm'] { background: #3a2422; }
+  /* bright value, light label/sub on the fill */
+  :root[data-theme='dark'] .surface-card[data-fill] .kpi-value {
+    color: #f3f8f6;
+  }
+  :root[data-theme='dark'] .surface-card[data-fill] .kpi-label {
+    color: rgba(255, 255, 255, 0.92);
+  }
+  :root[data-theme='dark'] .surface-card[data-fill] .card-subtext,
+  :root[data-theme='dark'] .surface-card[data-fill] .kpi-note {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  :root[data-theme='dark'] .surface-card[data-fill] .kpi-delta {
+    color: rgba(255, 255, 255, 0.85);
+  }
+  /* glowing translucent icon chip */
+  :root[data-theme='dark'] .surface-card[data-fill] .kpi-chip {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #d9efe9;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 4px 14px rgba(18, 179, 166, 0.3);
+  }
+
   /* Login backdrop: a clearly-visible branded teal→charcoal diagonal gradient
      (per theme via --login-gradient), not a faint wash. */
   .login-bg {
     background: var(--login-gradient);
+  }
+
+  /* Alert feed: severity chip (tinted square, colored by severity) + critical
+     row wash. color-mix keeps the tints theme-aware in dark and light. */
+  .alert-chip {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+  .alert-chip[data-sev='info'] {
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    color: var(--accent);
+  }
+  .alert-chip[data-sev='warning'] {
+    background: color-mix(in srgb, var(--warning) 20%, transparent);
+    color: var(--warning);
+  }
+  .alert-chip[data-sev='critical'] {
+    background: color-mix(in srgb, var(--danger) 20%, transparent);
+    color: var(--danger);
+  }
+  /* critical row: faint red background wash (no side-stripe). */
+  .alert-row--critical {
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
   }
 
   .btn-accent {
@@ -206,4 +282,144 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+
+  /* Skeleton placeholder: a muted block with a slow shimmer sweep. Used by the
+     dashboard's loading state so the layout footprint is reserved (no jump when
+     data lands) instead of a bare text flash. */
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background: var(--surface-2);
+    border-radius: 8px;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--text) 7%, transparent) 50%,
+      transparent 100%
+    );
+    animation: skeleton-sweep 1.4s ease-in-out infinite;
+  }
+  @keyframes skeleton-sweep {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* Inline info affordance on a KPI label: a small "i" button that reveals a
+     short explanation on hover / keyboard focus. The bubble drops BELOW the
+     trigger (away from the card's top edge) so it never clips. */
+  .kpi-info {
+    position: relative;
+    display: inline-flex;
+  }
+  .kpi-info__btn {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    font-size: 10px;
+    line-height: 1;
+    cursor: help;
+  }
+  .kpi-info__btn:hover,
+  .kpi-info__btn:focus-visible {
+    color: var(--accent);
+    border-color: var(--accent);
+    outline: none;
+  }
+  .kpi-info__bubble {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 20;
+    width: max-content;
+    max-width: 240px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+    opacity: 0;
+    transform: translateY(-2px);
+    pointer-events: none;
+    transition:
+      opacity 0.15s ease,
+      transform 0.15s ease;
+  }
+  .kpi-info:hover .kpi-info__bubble,
+  .kpi-info:focus-within .kpi-info__bubble {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Motion is never required: collapse shimmer + tooltip motion to instant. */
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton::after {
+      animation: none;
+    }
+    .kpi-info__bubble {
+      transition: none;
+      transform: none;
+    }
+    .kpi-info:hover .kpi-info__bubble,
+    .kpi-info:focus-within .kpi-info__bubble {
+      transform: none;
+    }
+  }
+}
+
+/* ── Leaflet overrides ──────────────────────────────────────────────────────
+   Tiles must render above the container background (z-index chain is fine by
+   default; we just ensure nothing covers the tile pane).
+   Zoom controls follow the active theme. */
+
+.leaflet-container {
+  font-family: inherit;
+}
+
+/* Tile pane must never be obscured */
+.leaflet-tile-pane {
+  opacity: 1 !important;
+}
+
+/* Dark-mode zoom controls */
+:root[data-theme='dark'] .leaflet-control-zoom a {
+  background-color: #1e2629;
+  color: #e6ebea;
+  border-color: #2a3338;
+}
+
+:root[data-theme='dark'] .leaflet-control-zoom a:hover {
+  background-color: #2a3338;
+  color: #12b3a6;
+}
+
+:root[data-theme='dark'] .leaflet-bar {
+  border-color: #2a3338;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Light-mode zoom controls (clean baseline) */
+:root[data-theme='light'] .leaflet-control-zoom a {
+  background-color: #ffffff;
+  color: #1a2426;
+  border-color: #dce3e1;
+}
+
+:root[data-theme='light'] .leaflet-control-zoom a:hover {
+  background-color: #eef2f1;
+  color: #00a090;
 }

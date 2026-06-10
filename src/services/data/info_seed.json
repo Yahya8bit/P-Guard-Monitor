@@ -1,0 +1,2436 @@
+{
+  "method": {
+    "date_source": "filename (Category-YYYY-M-D.json) \u2192 ISO YYYY-MM-DD; 2-Date field ignored",
+    "docking_procedure": "events with 0-Info==docking; procedure = from one 1-State==start to the next; succeeded if contains 1-State==success; attempts = failed_count + 1",
+    "obstacle_delay": "4-Delay (seconds, string\u2192float) per obstacle event",
+    "back_home_outcome": "0-Info==end events; 4-Notes in {Home_reached, Emergency_pressed}",
+    "composition": "rondes=Mission 0-Info==end, amarrages=docking procedures, retours_station=Back_home 0-Info==end, inspections=Inspecting 0-Info==start"
+  },
+  "docking": {
+    "procedures_total": 906,
+    "procedures_succeeded": 829,
+    "success_rate": 91.5,
+    "attempts_per_procedure_mean": 2.39,
+    "battery_at_dock": {
+      "mean": 70.06,
+      "median": 75.0,
+      "n": 906
+    },
+    "daily": [
+      {
+        "date": "2024-06-24",
+        "procedures": 8,
+        "succeeded": 2,
+        "failures": 6
+      },
+      {
+        "date": "2024-06-25",
+        "procedures": 22,
+        "succeeded": 20,
+        "failures": 2
+      },
+      {
+        "date": "2024-06-26",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2024-08-21",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2024-08-22",
+        "procedures": 40,
+        "succeeded": 22,
+        "failures": 18
+      },
+      {
+        "date": "2024-08-23",
+        "procedures": 46,
+        "succeeded": 42,
+        "failures": 4
+      },
+      {
+        "date": "2024-08-24",
+        "procedures": 4,
+        "succeeded": 2,
+        "failures": 2
+      },
+      {
+        "date": "2024-08-26",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2024-08-28",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2024-08-29",
+        "procedures": 6,
+        "succeeded": 6,
+        "failures": 0
+      },
+      {
+        "date": "2024-09-02",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2024-09-11",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2025-10-15",
+        "procedures": 1,
+        "succeeded": 1,
+        "failures": 0
+      },
+      {
+        "date": "2025-10-16",
+        "procedures": 1,
+        "succeeded": 1,
+        "failures": 0
+      },
+      {
+        "date": "2025-10-17",
+        "procedures": 6,
+        "succeeded": 5,
+        "failures": 1
+      },
+      {
+        "date": "2025-10-21",
+        "procedures": 7,
+        "succeeded": 4,
+        "failures": 3
+      },
+      {
+        "date": "2025-10-23",
+        "procedures": 2,
+        "succeeded": 0,
+        "failures": 2
+      },
+      {
+        "date": "2025-10-24",
+        "procedures": 3,
+        "succeeded": 3,
+        "failures": 0
+      },
+      {
+        "date": "2025-11-03",
+        "procedures": 42,
+        "succeeded": 36,
+        "failures": 6
+      },
+      {
+        "date": "2025-11-05",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2025-11-12",
+        "procedures": 1,
+        "succeeded": 1,
+        "failures": 0
+      },
+      {
+        "date": "2025-11-13",
+        "procedures": 1,
+        "succeeded": 1,
+        "failures": 0
+      },
+      {
+        "date": "2025-11-14",
+        "procedures": 5,
+        "succeeded": 5,
+        "failures": 0
+      },
+      {
+        "date": "2025-11-17",
+        "procedures": 4,
+        "succeeded": 4,
+        "failures": 0
+      },
+      {
+        "date": "2025-11-20",
+        "procedures": 13,
+        "succeeded": 11,
+        "failures": 2
+      },
+      {
+        "date": "2025-11-21",
+        "procedures": 7,
+        "succeeded": 3,
+        "failures": 4
+      },
+      {
+        "date": "2025-11-22",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2025-11-23",
+        "procedures": 3,
+        "succeeded": 3,
+        "failures": 0
+      },
+      {
+        "date": "2025-11-25",
+        "procedures": 11,
+        "succeeded": 11,
+        "failures": 0
+      },
+      {
+        "date": "2025-11-26",
+        "procedures": 8,
+        "succeeded": 5,
+        "failures": 3
+      },
+      {
+        "date": "2025-11-27",
+        "procedures": 16,
+        "succeeded": 7,
+        "failures": 9
+      },
+      {
+        "date": "2025-11-28",
+        "procedures": 16,
+        "succeeded": 16,
+        "failures": 0
+      },
+      {
+        "date": "2025-11-29",
+        "procedures": 5,
+        "succeeded": 4,
+        "failures": 1
+      },
+      {
+        "date": "2025-12-01",
+        "procedures": 30,
+        "succeeded": 24,
+        "failures": 6
+      },
+      {
+        "date": "2025-12-02",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-03",
+        "procedures": 44,
+        "succeeded": 44,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-04",
+        "procedures": 12,
+        "succeeded": 12,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-05",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-08",
+        "procedures": 14,
+        "succeeded": 14,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-09",
+        "procedures": 16,
+        "succeeded": 16,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-10",
+        "procedures": 7,
+        "succeeded": 7,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-11",
+        "procedures": 19,
+        "succeeded": 19,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-12",
+        "procedures": 5,
+        "succeeded": 5,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-15",
+        "procedures": 1,
+        "succeeded": 1,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-25",
+        "procedures": 11,
+        "succeeded": 11,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-26",
+        "procedures": 5,
+        "succeeded": 5,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-27",
+        "procedures": 1,
+        "succeeded": 1,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-29",
+        "procedures": 1,
+        "succeeded": 1,
+        "failures": 0
+      },
+      {
+        "date": "2025-12-30",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2026-01-06",
+        "procedures": 10,
+        "succeeded": 10,
+        "failures": 0
+      },
+      {
+        "date": "2026-01-08",
+        "procedures": 6,
+        "succeeded": 6,
+        "failures": 0
+      },
+      {
+        "date": "2026-01-09",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2026-01-15",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2026-03-28",
+        "procedures": 6,
+        "succeeded": 6,
+        "failures": 0
+      },
+      {
+        "date": "2026-03-30",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2026-03-31",
+        "procedures": 18,
+        "succeeded": 18,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-01",
+        "procedures": 6,
+        "succeeded": 6,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-02",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-03",
+        "procedures": 10,
+        "succeeded": 10,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-04",
+        "procedures": 12,
+        "succeeded": 12,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-05",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-06",
+        "procedures": 18,
+        "succeeded": 18,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-07",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-08",
+        "procedures": 4,
+        "succeeded": 4,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-09",
+        "procedures": 10,
+        "succeeded": 10,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-10",
+        "procedures": 6,
+        "succeeded": 6,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-11",
+        "procedures": 10,
+        "succeeded": 10,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-12",
+        "procedures": 10,
+        "succeeded": 10,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-13",
+        "procedures": 12,
+        "succeeded": 10,
+        "failures": 2
+      },
+      {
+        "date": "2026-04-14",
+        "procedures": 6,
+        "succeeded": 6,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-15",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-16",
+        "procedures": 6,
+        "succeeded": 6,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-17",
+        "procedures": 10,
+        "succeeded": 10,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-18",
+        "procedures": 10,
+        "succeeded": 10,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-19",
+        "procedures": 16,
+        "succeeded": 16,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-20",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-22",
+        "procedures": 20,
+        "succeeded": 20,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-23",
+        "procedures": 4,
+        "succeeded": 4,
+        "failures": 0
+      },
+      {
+        "date": "2026-04-24",
+        "procedures": 4,
+        "succeeded": 4,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-05",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-06",
+        "procedures": 6,
+        "succeeded": 6,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-07",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-08",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-09",
+        "procedures": 10,
+        "succeeded": 8,
+        "failures": 2
+      },
+      {
+        "date": "2026-05-10",
+        "procedures": 10,
+        "succeeded": 10,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-11",
+        "procedures": 6,
+        "succeeded": 4,
+        "failures": 2
+      },
+      {
+        "date": "2026-05-12",
+        "procedures": 6,
+        "succeeded": 6,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-13",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-14",
+        "procedures": 14,
+        "succeeded": 12,
+        "failures": 2
+      },
+      {
+        "date": "2026-05-15",
+        "procedures": 10,
+        "succeeded": 10,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-16",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-17",
+        "procedures": 10,
+        "succeeded": 10,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-18",
+        "procedures": 8,
+        "succeeded": 8,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-19",
+        "procedures": 6,
+        "succeeded": 6,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-20",
+        "procedures": 1,
+        "succeeded": 1,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-21",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-22",
+        "procedures": 4,
+        "succeeded": 4,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-23",
+        "procedures": 5,
+        "succeeded": 5,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-24",
+        "procedures": 5,
+        "succeeded": 5,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-25",
+        "procedures": 4,
+        "succeeded": 4,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-26",
+        "procedures": 3,
+        "succeeded": 3,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-27",
+        "procedures": 3,
+        "succeeded": 3,
+        "failures": 0
+      },
+      {
+        "date": "2026-05-28",
+        "procedures": 2,
+        "succeeded": 2,
+        "failures": 0
+      },
+      {
+        "date": "2026-06-01",
+        "procedures": 3,
+        "succeeded": 3,
+        "failures": 0
+      },
+      {
+        "date": "2026-06-02",
+        "procedures": 3,
+        "succeeded": 3,
+        "failures": 0
+      },
+      {
+        "date": "2026-06-03",
+        "procedures": 1,
+        "succeeded": 1,
+        "failures": 0
+      }
+    ]
+  },
+  "obstacles": {
+    "events_total": 216,
+    "delay_s": {
+      "mean": 16.61,
+      "median": 9.5,
+      "max": 169.6,
+      "total_min": 59.8
+    },
+    "daily": [
+      {
+        "date": "2024-06-25",
+        "count": 4,
+        "delay_s_total": 126.6
+      },
+      {
+        "date": "2024-06-28",
+        "count": 6,
+        "delay_s_total": 41.0
+      },
+      {
+        "date": "2024-07-01",
+        "count": 16,
+        "delay_s_total": 207.4
+      },
+      {
+        "date": "2024-07-02",
+        "count": 4,
+        "delay_s_total": 30.2
+      },
+      {
+        "date": "2024-08-23",
+        "count": 6,
+        "delay_s_total": 41.2
+      },
+      {
+        "date": "2024-08-26",
+        "count": 2,
+        "delay_s_total": 18.2
+      },
+      {
+        "date": "2024-09-27",
+        "count": 2,
+        "delay_s_total": 17.6
+      },
+      {
+        "date": "2024-09-30",
+        "count": 2,
+        "delay_s_total": 11.4
+      },
+      {
+        "date": "2025-01-30",
+        "count": 8,
+        "delay_s_total": 64.2
+      },
+      {
+        "date": "2025-01-31",
+        "count": 8,
+        "delay_s_total": 256.4
+      },
+      {
+        "date": "2025-02-01",
+        "count": 12,
+        "delay_s_total": 568.4
+      },
+      {
+        "date": "2025-02-02",
+        "count": 14,
+        "delay_s_total": 139.8
+      },
+      {
+        "date": "2025-02-04",
+        "count": 2,
+        "delay_s_total": 48.4
+      },
+      {
+        "date": "2025-02-07",
+        "count": 6,
+        "delay_s_total": 86.2
+      },
+      {
+        "date": "2025-02-08",
+        "count": 10,
+        "delay_s_total": 382.4
+      },
+      {
+        "date": "2025-10-24",
+        "count": 2,
+        "delay_s_total": 31.1
+      },
+      {
+        "date": "2025-11-17",
+        "count": 1,
+        "delay_s_total": 16.7
+      },
+      {
+        "date": "2025-11-20",
+        "count": 3,
+        "delay_s_total": 20.0
+      },
+      {
+        "date": "2025-11-23",
+        "count": 5,
+        "delay_s_total": 43.0
+      },
+      {
+        "date": "2025-11-25",
+        "count": 1,
+        "delay_s_total": 5.4
+      },
+      {
+        "date": "2025-11-28",
+        "count": 1,
+        "delay_s_total": 8.8
+      },
+      {
+        "date": "2025-11-29",
+        "count": 1,
+        "delay_s_total": 9.6
+      },
+      {
+        "date": "2025-12-02",
+        "count": 6,
+        "delay_s_total": 145.0
+      },
+      {
+        "date": "2025-12-03",
+        "count": 2,
+        "delay_s_total": 27.4
+      },
+      {
+        "date": "2025-12-08",
+        "count": 4,
+        "delay_s_total": 103.6
+      },
+      {
+        "date": "2025-12-09",
+        "count": 2,
+        "delay_s_total": 11.6
+      },
+      {
+        "date": "2025-12-11",
+        "count": 1,
+        "delay_s_total": 6.2
+      },
+      {
+        "date": "2025-12-12",
+        "count": 1,
+        "delay_s_total": 70.0
+      },
+      {
+        "date": "2025-12-23",
+        "count": 9,
+        "delay_s_total": 90.6
+      },
+      {
+        "date": "2025-12-26",
+        "count": 3,
+        "delay_s_total": 51.5
+      },
+      {
+        "date": "2025-12-29",
+        "count": 1,
+        "delay_s_total": 5.4
+      },
+      {
+        "date": "2026-01-05",
+        "count": 40,
+        "delay_s_total": 484.9
+      },
+      {
+        "date": "2026-01-06",
+        "count": 2,
+        "delay_s_total": 19.4
+      },
+      {
+        "date": "2026-03-28",
+        "count": 6,
+        "delay_s_total": 37.4
+      },
+      {
+        "date": "2026-03-30",
+        "count": 18,
+        "delay_s_total": 329.9
+      },
+      {
+        "date": "2026-05-05",
+        "count": 2,
+        "delay_s_total": 11.6
+      },
+      {
+        "date": "2026-05-16",
+        "count": 2,
+        "delay_s_total": 12.8
+      },
+      {
+        "date": "2026-05-20",
+        "count": 1,
+        "delay_s_total": 6.7
+      }
+    ]
+  },
+  "back_home": {
+    "returns_total": 1070,
+    "home_reached": 999,
+    "emergency_pressed": 71,
+    "success_rate": 93.4,
+    "daily": [
+      {
+        "date": "2024-06-13",
+        "returns": 3,
+        "reached": 3
+      },
+      {
+        "date": "2024-06-24",
+        "returns": 5,
+        "reached": 5
+      },
+      {
+        "date": "2024-06-25",
+        "returns": 17,
+        "reached": 17
+      },
+      {
+        "date": "2024-06-26",
+        "returns": 16,
+        "reached": 16
+      },
+      {
+        "date": "2024-06-27",
+        "returns": 2,
+        "reached": 2
+      },
+      {
+        "date": "2024-06-28",
+        "returns": 11,
+        "reached": 7
+      },
+      {
+        "date": "2024-07-01",
+        "returns": 10,
+        "reached": 6
+      },
+      {
+        "date": "2024-07-02",
+        "returns": 20,
+        "reached": 18
+      },
+      {
+        "date": "2024-07-09",
+        "returns": 5,
+        "reached": 3
+      },
+      {
+        "date": "2024-07-10",
+        "returns": 2,
+        "reached": 2
+      },
+      {
+        "date": "2024-07-11",
+        "returns": 7,
+        "reached": 7
+      },
+      {
+        "date": "2024-07-12",
+        "returns": 20,
+        "reached": 20
+      },
+      {
+        "date": "2024-07-22",
+        "returns": 6,
+        "reached": 6
+      },
+      {
+        "date": "2024-07-24",
+        "returns": 4,
+        "reached": 4
+      },
+      {
+        "date": "2024-07-31",
+        "returns": 14,
+        "reached": 14
+      },
+      {
+        "date": "2024-08-15",
+        "returns": 16,
+        "reached": 16
+      },
+      {
+        "date": "2024-08-20",
+        "returns": 3,
+        "reached": 3
+      },
+      {
+        "date": "2024-08-21",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2024-08-22",
+        "returns": 39,
+        "reached": 35
+      },
+      {
+        "date": "2024-08-23",
+        "returns": 22,
+        "reached": 22
+      },
+      {
+        "date": "2024-08-24",
+        "returns": 14,
+        "reached": 9
+      },
+      {
+        "date": "2024-08-26",
+        "returns": 2,
+        "reached": 2
+      },
+      {
+        "date": "2024-08-27",
+        "returns": 5,
+        "reached": 5
+      },
+      {
+        "date": "2024-08-28",
+        "returns": 2,
+        "reached": 2
+      },
+      {
+        "date": "2024-08-29",
+        "returns": 41,
+        "reached": 36
+      },
+      {
+        "date": "2024-09-02",
+        "returns": 8,
+        "reached": 7
+      },
+      {
+        "date": "2024-09-05",
+        "returns": 4,
+        "reached": 4
+      },
+      {
+        "date": "2024-09-11",
+        "returns": 41,
+        "reached": 40
+      },
+      {
+        "date": "2024-09-12",
+        "returns": 17,
+        "reached": 15
+      },
+      {
+        "date": "2024-09-13",
+        "returns": 13,
+        "reached": 13
+      },
+      {
+        "date": "2024-09-16",
+        "returns": 4,
+        "reached": 4
+      },
+      {
+        "date": "2024-09-24",
+        "returns": 14,
+        "reached": 13
+      },
+      {
+        "date": "2024-09-25",
+        "returns": 9,
+        "reached": 9
+      },
+      {
+        "date": "2024-09-27",
+        "returns": 3,
+        "reached": 3
+      },
+      {
+        "date": "2024-09-30",
+        "returns": 4,
+        "reached": 4
+      },
+      {
+        "date": "2024-10-01",
+        "returns": 10,
+        "reached": 10
+      },
+      {
+        "date": "2024-10-02",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2025-01-30",
+        "returns": 8,
+        "reached": 7
+      },
+      {
+        "date": "2025-01-31",
+        "returns": 3,
+        "reached": 2
+      },
+      {
+        "date": "2025-02-01",
+        "returns": 2,
+        "reached": 2
+      },
+      {
+        "date": "2025-02-02",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2025-02-03",
+        "returns": 5,
+        "reached": 5
+      },
+      {
+        "date": "2025-02-04",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2025-10-15",
+        "returns": 10,
+        "reached": 10
+      },
+      {
+        "date": "2025-10-16",
+        "returns": 15,
+        "reached": 12
+      },
+      {
+        "date": "2025-10-17",
+        "returns": 18,
+        "reached": 17
+      },
+      {
+        "date": "2025-10-21",
+        "returns": 12,
+        "reached": 9
+      },
+      {
+        "date": "2025-10-23",
+        "returns": 2,
+        "reached": 2
+      },
+      {
+        "date": "2025-10-24",
+        "returns": 19,
+        "reached": 17
+      },
+      {
+        "date": "2025-11-03",
+        "returns": 13,
+        "reached": 11
+      },
+      {
+        "date": "2025-11-05",
+        "returns": 8,
+        "reached": 7
+      },
+      {
+        "date": "2025-11-12",
+        "returns": 5,
+        "reached": 3
+      },
+      {
+        "date": "2025-11-13",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2025-11-14",
+        "returns": 17,
+        "reached": 16
+      },
+      {
+        "date": "2025-11-17",
+        "returns": 9,
+        "reached": 9
+      },
+      {
+        "date": "2025-11-20",
+        "returns": 36,
+        "reached": 34
+      },
+      {
+        "date": "2025-11-21",
+        "returns": 17,
+        "reached": 15
+      },
+      {
+        "date": "2025-11-22",
+        "returns": 13,
+        "reached": 11
+      },
+      {
+        "date": "2025-11-23",
+        "returns": 18,
+        "reached": 15
+      },
+      {
+        "date": "2025-11-25",
+        "returns": 13,
+        "reached": 13
+      },
+      {
+        "date": "2025-11-26",
+        "returns": 16,
+        "reached": 16
+      },
+      {
+        "date": "2025-11-27",
+        "returns": 19,
+        "reached": 19
+      },
+      {
+        "date": "2025-11-28",
+        "returns": 20,
+        "reached": 20
+      },
+      {
+        "date": "2025-11-29",
+        "returns": 3,
+        "reached": 3
+      },
+      {
+        "date": "2025-12-01",
+        "returns": 24,
+        "reached": 24
+      },
+      {
+        "date": "2025-12-02",
+        "returns": 10,
+        "reached": 9
+      },
+      {
+        "date": "2025-12-03",
+        "returns": 11,
+        "reached": 11
+      },
+      {
+        "date": "2025-12-04",
+        "returns": 8,
+        "reached": 8
+      },
+      {
+        "date": "2025-12-05",
+        "returns": 5,
+        "reached": 2
+      },
+      {
+        "date": "2025-12-08",
+        "returns": 6,
+        "reached": 6
+      },
+      {
+        "date": "2025-12-09",
+        "returns": 17,
+        "reached": 17
+      },
+      {
+        "date": "2025-12-10",
+        "returns": 2,
+        "reached": 2
+      },
+      {
+        "date": "2025-12-11",
+        "returns": 10,
+        "reached": 10
+      },
+      {
+        "date": "2025-12-12",
+        "returns": 7,
+        "reached": 7
+      },
+      {
+        "date": "2025-12-15",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2025-12-23",
+        "returns": 14,
+        "reached": 14
+      },
+      {
+        "date": "2025-12-25",
+        "returns": 8,
+        "reached": 8
+      },
+      {
+        "date": "2025-12-26",
+        "returns": 38,
+        "reached": 38
+      },
+      {
+        "date": "2025-12-27",
+        "returns": 33,
+        "reached": 33
+      },
+      {
+        "date": "2025-12-29",
+        "returns": 8,
+        "reached": 7
+      },
+      {
+        "date": "2025-12-30",
+        "returns": 14,
+        "reached": 14
+      },
+      {
+        "date": "2026-01-05",
+        "returns": 8,
+        "reached": 8
+      },
+      {
+        "date": "2026-01-06",
+        "returns": 18,
+        "reached": 16
+      },
+      {
+        "date": "2026-01-08",
+        "returns": 20,
+        "reached": 19
+      },
+      {
+        "date": "2026-01-09",
+        "returns": 7,
+        "reached": 7
+      },
+      {
+        "date": "2026-01-15",
+        "returns": 2,
+        "reached": 2
+      },
+      {
+        "date": "2026-03-28",
+        "returns": 9,
+        "reached": 9
+      },
+      {
+        "date": "2026-03-30",
+        "returns": 11,
+        "reached": 10
+      },
+      {
+        "date": "2026-03-31",
+        "returns": 7,
+        "reached": 7
+      },
+      {
+        "date": "2026-04-02",
+        "returns": 2,
+        "reached": 2
+      },
+      {
+        "date": "2026-04-03",
+        "returns": 2,
+        "reached": 2
+      },
+      {
+        "date": "2026-04-06",
+        "returns": 3,
+        "reached": 3
+      },
+      {
+        "date": "2026-04-09",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2026-04-13",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2026-04-22",
+        "returns": 14,
+        "reached": 11
+      },
+      {
+        "date": "2026-05-05",
+        "returns": 3,
+        "reached": 2
+      },
+      {
+        "date": "2026-05-08",
+        "returns": 5,
+        "reached": 5
+      },
+      {
+        "date": "2026-05-09",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2026-05-12",
+        "returns": 2,
+        "reached": 1
+      },
+      {
+        "date": "2026-05-13",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2026-05-14",
+        "returns": 3,
+        "reached": 3
+      },
+      {
+        "date": "2026-05-16",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2026-05-17",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2026-05-18",
+        "returns": 2,
+        "reached": 2
+      },
+      {
+        "date": "2026-05-21",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2026-05-22",
+        "returns": 2,
+        "reached": 2
+      },
+      {
+        "date": "2026-05-25",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2026-05-26",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2026-05-28",
+        "returns": 1,
+        "reached": 1
+      },
+      {
+        "date": "2026-06-01",
+        "returns": 4,
+        "reached": 4
+      },
+      {
+        "date": "2026-06-03",
+        "returns": 1,
+        "reached": 1
+      }
+    ]
+  },
+  "composition": {
+    "totals": {
+      "rondes": 969,
+      "amarrages": 906,
+      "retours_station": 1070,
+      "inspections": 41
+    },
+    "daily": [
+      {
+        "date": "2024-06-13",
+        "rondes": 0,
+        "amarrages": 0,
+        "retours_station": 3,
+        "inspections": 0
+      },
+      {
+        "date": "2024-06-24",
+        "rondes": 0,
+        "amarrages": 8,
+        "retours_station": 5,
+        "inspections": 0
+      },
+      {
+        "date": "2024-06-25",
+        "rondes": 2,
+        "amarrages": 22,
+        "retours_station": 17,
+        "inspections": 0
+      },
+      {
+        "date": "2024-06-26",
+        "rondes": 2,
+        "amarrages": 2,
+        "retours_station": 16,
+        "inspections": 0
+      },
+      {
+        "date": "2024-06-27",
+        "rondes": 2,
+        "amarrages": 0,
+        "retours_station": 2,
+        "inspections": 0
+      },
+      {
+        "date": "2024-06-28",
+        "rondes": 18,
+        "amarrages": 0,
+        "retours_station": 11,
+        "inspections": 0
+      },
+      {
+        "date": "2024-07-01",
+        "rondes": 0,
+        "amarrages": 0,
+        "retours_station": 10,
+        "inspections": 0
+      },
+      {
+        "date": "2024-07-02",
+        "rondes": 20,
+        "amarrages": 0,
+        "retours_station": 20,
+        "inspections": 2
+      },
+      {
+        "date": "2024-07-09",
+        "rondes": 0,
+        "amarrages": 0,
+        "retours_station": 5,
+        "inspections": 0
+      },
+      {
+        "date": "2024-07-10",
+        "rondes": 0,
+        "amarrages": 0,
+        "retours_station": 2,
+        "inspections": 0
+      },
+      {
+        "date": "2024-07-11",
+        "rondes": 28,
+        "amarrages": 0,
+        "retours_station": 7,
+        "inspections": 0
+      },
+      {
+        "date": "2024-07-12",
+        "rondes": 14,
+        "amarrages": 0,
+        "retours_station": 20,
+        "inspections": 0
+      },
+      {
+        "date": "2024-07-22",
+        "rondes": 0,
+        "amarrages": 0,
+        "retours_station": 6,
+        "inspections": 0
+      },
+      {
+        "date": "2024-07-24",
+        "rondes": 0,
+        "amarrages": 0,
+        "retours_station": 4,
+        "inspections": 0
+      },
+      {
+        "date": "2024-07-31",
+        "rondes": 22,
+        "amarrages": 0,
+        "retours_station": 14,
+        "inspections": 4
+      },
+      {
+        "date": "2024-08-15",
+        "rondes": 4,
+        "amarrages": 0,
+        "retours_station": 16,
+        "inspections": 0
+      },
+      {
+        "date": "2024-08-20",
+        "rondes": 2,
+        "amarrages": 0,
+        "retours_station": 3,
+        "inspections": 0
+      },
+      {
+        "date": "2024-08-21",
+        "rondes": 0,
+        "amarrages": 2,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2024-08-22",
+        "rondes": 38,
+        "amarrages": 40,
+        "retours_station": 39,
+        "inspections": 0
+      },
+      {
+        "date": "2024-08-23",
+        "rondes": 50,
+        "amarrages": 46,
+        "retours_station": 22,
+        "inspections": 6
+      },
+      {
+        "date": "2024-08-24",
+        "rondes": 42,
+        "amarrages": 4,
+        "retours_station": 14,
+        "inspections": 0
+      },
+      {
+        "date": "2024-08-26",
+        "rondes": 2,
+        "amarrages": 2,
+        "retours_station": 2,
+        "inspections": 0
+      },
+      {
+        "date": "2024-08-27",
+        "rondes": 10,
+        "amarrages": 0,
+        "retours_station": 5,
+        "inspections": 0
+      },
+      {
+        "date": "2024-08-28",
+        "rondes": 2,
+        "amarrages": 2,
+        "retours_station": 2,
+        "inspections": 0
+      },
+      {
+        "date": "2024-08-29",
+        "rondes": 2,
+        "amarrages": 6,
+        "retours_station": 41,
+        "inspections": 0
+      },
+      {
+        "date": "2024-09-02",
+        "rondes": 26,
+        "amarrages": 2,
+        "retours_station": 8,
+        "inspections": 0
+      },
+      {
+        "date": "2024-09-05",
+        "rondes": 6,
+        "amarrages": 0,
+        "retours_station": 4,
+        "inspections": 0
+      },
+      {
+        "date": "2024-09-11",
+        "rondes": 6,
+        "amarrages": 8,
+        "retours_station": 41,
+        "inspections": 0
+      },
+      {
+        "date": "2024-09-12",
+        "rondes": 4,
+        "amarrages": 0,
+        "retours_station": 17,
+        "inspections": 0
+      },
+      {
+        "date": "2024-09-13",
+        "rondes": 0,
+        "amarrages": 0,
+        "retours_station": 13,
+        "inspections": 0
+      },
+      {
+        "date": "2024-09-16",
+        "rondes": 4,
+        "amarrages": 0,
+        "retours_station": 4,
+        "inspections": 0
+      },
+      {
+        "date": "2024-09-24",
+        "rondes": 14,
+        "amarrages": 0,
+        "retours_station": 14,
+        "inspections": 2
+      },
+      {
+        "date": "2024-09-25",
+        "rondes": 0,
+        "amarrages": 0,
+        "retours_station": 9,
+        "inspections": 0
+      },
+      {
+        "date": "2024-09-27",
+        "rondes": 2,
+        "amarrages": 0,
+        "retours_station": 3,
+        "inspections": 0
+      },
+      {
+        "date": "2024-09-30",
+        "rondes": 0,
+        "amarrages": 0,
+        "retours_station": 4,
+        "inspections": 2
+      },
+      {
+        "date": "2024-10-01",
+        "rondes": 0,
+        "amarrages": 0,
+        "retours_station": 10,
+        "inspections": 0
+      },
+      {
+        "date": "2024-10-02",
+        "rondes": 0,
+        "amarrages": 0,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2025-01-30",
+        "rondes": 18,
+        "amarrages": 0,
+        "retours_station": 8,
+        "inspections": 0
+      },
+      {
+        "date": "2025-01-31",
+        "rondes": 16,
+        "amarrages": 0,
+        "retours_station": 3,
+        "inspections": 0
+      },
+      {
+        "date": "2025-02-01",
+        "rondes": 6,
+        "amarrages": 0,
+        "retours_station": 2,
+        "inspections": 10
+      },
+      {
+        "date": "2025-02-02",
+        "rondes": 4,
+        "amarrages": 0,
+        "retours_station": 1,
+        "inspections": 6
+      },
+      {
+        "date": "2025-02-03",
+        "rondes": 10,
+        "amarrages": 0,
+        "retours_station": 5,
+        "inspections": 2
+      },
+      {
+        "date": "2025-02-04",
+        "rondes": 4,
+        "amarrages": 0,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2025-02-07",
+        "rondes": 2,
+        "amarrages": 0,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2025-02-08",
+        "rondes": 6,
+        "amarrages": 0,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2025-10-15",
+        "rondes": 10,
+        "amarrages": 1,
+        "retours_station": 10,
+        "inspections": 0
+      },
+      {
+        "date": "2025-10-16",
+        "rondes": 8,
+        "amarrages": 1,
+        "retours_station": 15,
+        "inspections": 0
+      },
+      {
+        "date": "2025-10-17",
+        "rondes": 5,
+        "amarrages": 6,
+        "retours_station": 18,
+        "inspections": 0
+      },
+      {
+        "date": "2025-10-21",
+        "rondes": 0,
+        "amarrages": 7,
+        "retours_station": 12,
+        "inspections": 0
+      },
+      {
+        "date": "2025-10-23",
+        "rondes": 0,
+        "amarrages": 2,
+        "retours_station": 2,
+        "inspections": 0
+      },
+      {
+        "date": "2025-10-24",
+        "rondes": 0,
+        "amarrages": 3,
+        "retours_station": 19,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-03",
+        "rondes": 2,
+        "amarrages": 42,
+        "retours_station": 13,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-05",
+        "rondes": 4,
+        "amarrages": 2,
+        "retours_station": 8,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-12",
+        "rondes": 0,
+        "amarrages": 1,
+        "retours_station": 5,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-13",
+        "rondes": 0,
+        "amarrages": 1,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-14",
+        "rondes": 8,
+        "amarrages": 5,
+        "retours_station": 17,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-17",
+        "rondes": 5,
+        "amarrages": 4,
+        "retours_station": 9,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-20",
+        "rondes": 12,
+        "amarrages": 13,
+        "retours_station": 36,
+        "inspections": 3
+      },
+      {
+        "date": "2025-11-21",
+        "rondes": 7,
+        "amarrages": 7,
+        "retours_station": 17,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-22",
+        "rondes": 8,
+        "amarrages": 8,
+        "retours_station": 13,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-23",
+        "rondes": 6,
+        "amarrages": 3,
+        "retours_station": 18,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-25",
+        "rondes": 1,
+        "amarrages": 11,
+        "retours_station": 13,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-26",
+        "rondes": 1,
+        "amarrages": 8,
+        "retours_station": 16,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-27",
+        "rondes": 1,
+        "amarrages": 16,
+        "retours_station": 19,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-28",
+        "rondes": 1,
+        "amarrages": 16,
+        "retours_station": 20,
+        "inspections": 0
+      },
+      {
+        "date": "2025-11-29",
+        "rondes": 3,
+        "amarrages": 5,
+        "retours_station": 3,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-01",
+        "rondes": 10,
+        "amarrages": 30,
+        "retours_station": 24,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-02",
+        "rondes": 4,
+        "amarrages": 2,
+        "retours_station": 10,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-03",
+        "rondes": 0,
+        "amarrages": 44,
+        "retours_station": 11,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-04",
+        "rondes": 6,
+        "amarrages": 12,
+        "retours_station": 8,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-05",
+        "rondes": 8,
+        "amarrages": 8,
+        "retours_station": 5,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-08",
+        "rondes": 10,
+        "amarrages": 14,
+        "retours_station": 6,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-09",
+        "rondes": 10,
+        "amarrages": 16,
+        "retours_station": 17,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-10",
+        "rondes": 7,
+        "amarrages": 7,
+        "retours_station": 2,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-11",
+        "rondes": 1,
+        "amarrages": 19,
+        "retours_station": 10,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-12",
+        "rondes": 4,
+        "amarrages": 5,
+        "retours_station": 7,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-15",
+        "rondes": 1,
+        "amarrages": 1,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-23",
+        "rondes": 12,
+        "amarrages": 0,
+        "retours_station": 14,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-25",
+        "rondes": 0,
+        "amarrages": 11,
+        "retours_station": 8,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-26",
+        "rondes": 18,
+        "amarrages": 5,
+        "retours_station": 38,
+        "inspections": 2
+      },
+      {
+        "date": "2025-12-27",
+        "rondes": 3,
+        "amarrages": 1,
+        "retours_station": 33,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-29",
+        "rondes": 1,
+        "amarrages": 1,
+        "retours_station": 8,
+        "inspections": 0
+      },
+      {
+        "date": "2025-12-30",
+        "rondes": 10,
+        "amarrages": 2,
+        "retours_station": 14,
+        "inspections": 1
+      },
+      {
+        "date": "2026-01-05",
+        "rondes": 4,
+        "amarrages": 0,
+        "retours_station": 8,
+        "inspections": 0
+      },
+      {
+        "date": "2026-01-06",
+        "rondes": 4,
+        "amarrages": 10,
+        "retours_station": 18,
+        "inspections": 0
+      },
+      {
+        "date": "2026-01-08",
+        "rondes": 8,
+        "amarrages": 6,
+        "retours_station": 20,
+        "inspections": 1
+      },
+      {
+        "date": "2026-01-09",
+        "rondes": 4,
+        "amarrages": 8,
+        "retours_station": 7,
+        "inspections": 0
+      },
+      {
+        "date": "2026-01-15",
+        "rondes": 0,
+        "amarrages": 2,
+        "retours_station": 2,
+        "inspections": 0
+      },
+      {
+        "date": "2026-03-28",
+        "rondes": 8,
+        "amarrages": 6,
+        "retours_station": 9,
+        "inspections": 0
+      },
+      {
+        "date": "2026-03-30",
+        "rondes": 8,
+        "amarrages": 2,
+        "retours_station": 11,
+        "inspections": 0
+      },
+      {
+        "date": "2026-03-31",
+        "rondes": 18,
+        "amarrages": 18,
+        "retours_station": 7,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-01",
+        "rondes": 6,
+        "amarrages": 6,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-02",
+        "rondes": 6,
+        "amarrages": 8,
+        "retours_station": 2,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-03",
+        "rondes": 8,
+        "amarrages": 10,
+        "retours_station": 2,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-04",
+        "rondes": 10,
+        "amarrages": 12,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-05",
+        "rondes": 8,
+        "amarrages": 8,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-06",
+        "rondes": 14,
+        "amarrages": 18,
+        "retours_station": 3,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-07",
+        "rondes": 8,
+        "amarrages": 8,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-08",
+        "rondes": 4,
+        "amarrages": 4,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-09",
+        "rondes": 8,
+        "amarrages": 10,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-10",
+        "rondes": 6,
+        "amarrages": 6,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-11",
+        "rondes": 10,
+        "amarrages": 10,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-12",
+        "rondes": 10,
+        "amarrages": 10,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-13",
+        "rondes": 6,
+        "amarrages": 12,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-14",
+        "rondes": 6,
+        "amarrages": 6,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-15",
+        "rondes": 6,
+        "amarrages": 8,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-16",
+        "rondes": 6,
+        "amarrages": 6,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-17",
+        "rondes": 6,
+        "amarrages": 10,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-18",
+        "rondes": 10,
+        "amarrages": 10,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-19",
+        "rondes": 10,
+        "amarrages": 16,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-20",
+        "rondes": 2,
+        "amarrages": 2,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-22",
+        "rondes": 4,
+        "amarrages": 20,
+        "retours_station": 14,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-23",
+        "rondes": 4,
+        "amarrages": 4,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-04-24",
+        "rondes": 4,
+        "amarrages": 4,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-05",
+        "rondes": 26,
+        "amarrages": 8,
+        "retours_station": 3,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-06",
+        "rondes": 6,
+        "amarrages": 6,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-07",
+        "rondes": 6,
+        "amarrages": 8,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-08",
+        "rondes": 10,
+        "amarrages": 8,
+        "retours_station": 5,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-09",
+        "rondes": 8,
+        "amarrages": 10,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-10",
+        "rondes": 10,
+        "amarrages": 10,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-11",
+        "rondes": 6,
+        "amarrages": 6,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-12",
+        "rondes": 4,
+        "amarrages": 6,
+        "retours_station": 2,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-13",
+        "rondes": 6,
+        "amarrages": 8,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-14",
+        "rondes": 10,
+        "amarrages": 14,
+        "retours_station": 3,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-15",
+        "rondes": 6,
+        "amarrages": 10,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-16",
+        "rondes": 8,
+        "amarrages": 8,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-17",
+        "rondes": 8,
+        "amarrages": 10,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-18",
+        "rondes": 8,
+        "amarrages": 8,
+        "retours_station": 2,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-19",
+        "rondes": 6,
+        "amarrages": 6,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-20",
+        "rondes": 2,
+        "amarrages": 1,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-21",
+        "rondes": 4,
+        "amarrages": 2,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-22",
+        "rondes": 9,
+        "amarrages": 4,
+        "retours_station": 2,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-23",
+        "rondes": 6,
+        "amarrages": 5,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-24",
+        "rondes": 5,
+        "amarrages": 5,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-25",
+        "rondes": 3,
+        "amarrages": 4,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-26",
+        "rondes": 2,
+        "amarrages": 3,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-27",
+        "rondes": 3,
+        "amarrages": 3,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-05-28",
+        "rondes": 1,
+        "amarrages": 2,
+        "retours_station": 1,
+        "inspections": 0
+      },
+      {
+        "date": "2026-06-01",
+        "rondes": 9,
+        "amarrages": 3,
+        "retours_station": 4,
+        "inspections": 0
+      },
+      {
+        "date": "2026-06-02",
+        "rondes": 3,
+        "amarrages": 3,
+        "retours_station": 0,
+        "inspections": 0
+      },
+      {
+        "date": "2026-06-03",
+        "rondes": 3,
+        "amarrages": 1,
+        "retours_station": 1,
+        "inspections": 0
+      }
+    ]
+  },
+  "data_quality": {
+    "docking": {
+      "files_read": 174,
+      "files_skipped": 0,
+      "unparseable_events": 0
+    },
+    "obstacles": {
+      "files_read": 63,
+      "files_skipped": 0,
+      "unparseable_events": 0
+    },
+    "back_home": {
+      "files_read": 111,
+      "files_skipped": 0,
+      "unparseable_events": 0
+    }
+  }
+}

@@ -10,20 +10,22 @@ interface Props {
   value: ReactNode;
   icon: string; // svg path
   note?: string; // small clarifier under the value (e.g. proxy / TODO)
+  hint?: string; // longer explanation revealed by the info affordance on the label
   deltaPct?: number;
   sentiment?: Sentiment;
   subtext?: ReactNode; // muted "compared to what" line under the value
   placeholder?: boolean; // renders the "data not yet derivable" treatment
   onSelect?: () => void; // if set, card is clickable and drives the trend chart
+  selected?: boolean; // this card's metric is the one shown in the trend chart
   emphasized?: boolean; // alert state: danger-tinted fill (see .kpi-alert)
   tone?: 'teal' | 'danger'; // light-theme icon-chip / accent color
-  fill?: 'deep' | 'mid' | 'soft' | 'muted' | 'danger' | 'danger-calm'; // light-only solid tile fill
+  fill?: string; // tile fill key (data-fill): teal depths / warning / danger / muted
 }
 
 // KPI card: label top-left, big accent number, secondary value, icon top-right.
 // `placeholder` is used for Disponibilité — formula is TODO, so we never show a
 // fake percentage (CLAUDE.md: clearly-labelled placeholder, no fabrication).
-export function KpiCard({ label, value, icon, note, deltaPct, sentiment = 'neutral', subtext, placeholder, onSelect, emphasized, tone = 'teal', fill }: Props) {
+export function KpiCard({ label, value, icon, note, hint, deltaPct, sentiment = 'neutral', subtext, placeholder, onSelect, selected, emphasized, tone = 'teal', fill }: Props) {
   const up = deltaPct !== undefined && deltaPct >= 0;
 
   // Delta badge color is chosen by SENTIMENT, not by arrow direction:
@@ -39,16 +41,17 @@ export function KpiCard({ label, value, icon, note, deltaPct, sentiment = 'neutr
     return favorable ? 'text-success' : 'text-danger';
   })();
 
-  // When onSelect is set the card selects the trend metric. The click-to-chart
-  // highlight is TRANSIENT only — a hover ring + a pressed (active:) ring — it
-  // does NOT persist (no permanent border on the selected card). All inset rings
-  // (box-shadow), so the box size never changes. The only persistent special
-  // styling is the danger fill on a card in alert state (emphasized).
+  // When onSelect is set the card drives the trend metric. The CURRENTLY-SELECTED
+  // card keeps a persistent accent ring so it's obvious which metric the chart is
+  // showing and that the cards are interactive at all (aria-pressed exposes the
+  // same state to assistive tech). Hover/active/focus-visible rings layer on top.
+  // All rings are inset (box-shadow), so the box size never changes.
   const selectable = !!onSelect;
   return (
     <div
       role={selectable ? 'button' : undefined}
       tabIndex={selectable ? 0 : undefined}
+      aria-pressed={selectable ? !!selected : undefined}
       onClick={onSelect}
       onKeyDown={selectable ? (e) => (e.key === 'Enter' || e.key === ' ') && onSelect!() : undefined}
       // data-fill drives the LIGHT-only solid tile fill (ignored in dark)
@@ -60,12 +63,17 @@ export function KpiCard({ label, value, icon, note, deltaPct, sentiment = 'neutr
         // border-color (same 1px border), so the box size never changes.
         emphasized ? 'kpi-alert' : '',
         selectable
-          ? 'cursor-pointer transition-shadow hover:ring-1 hover:ring-inset hover:ring-accent/50 active:ring-2 active:ring-inset active:ring-accent'
+          ? 'cursor-pointer transition-shadow hover:ring-1 hover:ring-inset hover:ring-accent/50 active:ring-2 active:ring-inset active:ring-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent'
           : '',
+        // persistent selected state — the metric currently in the chart
+        selected ? 'ring-1 ring-inset ring-accent' : '',
       ].join(' ')}
     >
       <div className="flex items-start justify-between">
-        <span className="kpi-label text-base font-semibold text-text">{label}</span>
+        <span className="flex items-center gap-1.5">
+          <span className="kpi-label text-base font-semibold text-text">{label}</span>
+          {hint && <InfoHint label={label} text={hint} />}
+        </span>
         {/* icon chip: bare icon on dark, tinted rounded square on light */}
         <span className="kpi-chip" data-tone={tone}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -97,5 +105,28 @@ export function KpiCard({ label, value, icon, note, deltaPct, sentiment = 'neutr
       {/* optional smaller third-line note (no sparkline — removed as filler) */}
       {note && <p className="kpi-note mt-2 text-[11px] leading-tight text-muted">{note}</p>}
     </div>
+  );
+}
+
+// Small "i" affordance next to a KPI label. Reveals a short explanation on hover
+// or keyboard focus (CSS-driven, see .kpi-info in index.css). The trigger sits
+// outside the card's click target via stopPropagation so opening the hint never
+// also flips the trend metric.
+function InfoHint({ label, text }: { label: string; text: string }) {
+  return (
+    <span className="kpi-info">
+      <button
+        type="button"
+        className="kpi-info__btn"
+        aria-label={`Aide pour ${label}. ${text}`}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
+        i
+      </button>
+      <span role="tooltip" className="kpi-info__bubble">
+        {text}
+      </span>
+    </span>
   );
 }

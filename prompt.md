@@ -1,13 +1,17 @@
-Fix the logo on the login left panel — it's faint and washed out against the dusk
-background image. Match the attached screenshot.
+Use claude-sonnet-4-5 for this task.
 
-- Use the transparent logo (same file as the sidebar, public/logo.png /
-  logo-transparent.png) — not a white-tiled version.
-- Since it sits over a photo, give the brand block legibility: add a subtle dark
-  scrim behind the logo+text area (a soft gradient or low-opacity dark rounded
-  backing), OR a soft text-shadow/drop-shadow on the mark and the "P-Guard Monitor"
-  text. The white text and the logo must read clearly against the bright/busy parts
-  of the image.
-- Keep it top-left, ~44px logo, white text.
+Fix the dark-mode rendering of the "Dernière position et trajet" map on the Dashboard (and check the Statistiques map for the same bug): the basemap renders as a solid dark void — tiles are not displayed — while the polyline and markers render fine.
 
-Verify the logo and name are clearly legible over the image.
+**1. Force TileLayer remount on theme change**
+react-leaflet does not reload tiles when the url prop changes. Give the TileLayer a key tied to the theme:
+<TileLayer key={theme} url={theme === 'dark' ? DARK_URL : LIGHT_URL} attribution={...} />
+DARK_URL: https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png
+LIGHT_URL: https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png
+
+**2. Verify nothing covers the tiles**
+Check that no dark-theme CSS sets a background/filter on .leaflet-container or its tile panes that hides tiles. The container background can stay dark as a loading backdrop, but tiles must render above it. Open the browser console and report any 4xx on tile requests if the key fix isn't enough.
+
+**3. Style the zoom controls for dark mode**
+Add CSS so .leaflet-control-zoom buttons follow the theme (dark background, light icon, subtle border in dark mode) instead of the default white.
+
+Apply the same fixes to the Statistiques "Trajet de patrouille (GPS)" map if it shares the issue.

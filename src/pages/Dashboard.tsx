@@ -1,31 +1,58 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { RobotIntrouvable } from '../auth/guards';
 import { BatteryCard } from '../components/dashboard/BatteryCard';
 import { KpiCard } from '../components/dashboard/KpiCard';
 import { StatusBar } from '../components/dashboard/StatusBar';
 import { TrendChart } from '../components/dashboard/TrendChart';
 import { AlertsStrip } from '../components/dashboard/AlertsStrip';
+import { LastPositionMap } from '../components/dashboard/LastPositionMap';
 import {
   fetchBatterySamples,
   fetchDashboard,
   fetchIncidentBreakdown,
+  fetchInfoStats,
+  fetchLastKnownTrack,
   fetchMetricTrend,
   fetchRecentAlerts,
   getRobot,
 } from '../services/api';
+import type { InfoStats, LastKnownTrack } from '../services/api';
 import type { TrendMetric } from '../services/mock';
 import type { Alert, BatterySample, DashboardSummary, Period, Robot, TrendSeries } from '../types/contract';
 
 type Breakdown = { obstacles: number; emergencyStops: number; total: number };
 
-// Generic, reusable alert rule: a card is emphasized when its value crosses a
-// threshold in the BAD direction for its sentiment. "higher-worse" alerts above
-// the threshold; "higher-better" would alert below it. Wired for Incidents now,
-// but the same helper could later flag low battery / low availability, etc.
-function isAlert(sentiment: 'higher-better' | 'higher-worse', value: number, threshold: number): boolean {
-  return sentiment === 'higher-worse' ? value > threshold : value < threshold;
+// ── KPI alert-state system (one generic mechanism) ───────────────────────────
+// SINGLE SOURCE OF TRUTH: per-KPI { sentiment, alertAt, warnAt? }. ONLY KPIs with
+// a real, honest threshold appear here; everything else stays calm-neutral.
+//   battery   : higher-better — alert < 30%, warning < 50% (low battery = bad)
+//   incidents : higher-worse  — thresholds are PER-DAY rates (value / periodDays),
+//               so a normal month doesn't sit permanently red: ~0.3/day is routine
+//               ops for this unit; alert only above 0.8/day, amber above 0.5/day.
+type Sent = 'higher-better' | 'higher-worse';
+type KpiState = 'calm' | 'warning' | 'alert';
+const KPI_ALERTS: Record<'battery' | 'incidents', { sentiment: Sent; alertAt: number; warnAt?: number }> = {
+  battery: { sentiment: 'higher-better', alertAt: 30, warnAt: 50 },
+  incidents: { sentiment: 'higher-worse', alertAt: 0.8, warnAt: 0.5 },
+};
+
+function kpiState(value: number, cfg: { sentiment: Sent; alertAt: number; warnAt?: number }): KpiState {
+  if (cfg.sentiment === 'higher-better') {
+    if (value < cfg.alertAt) return 'alert';
+    if (cfg.warnAt !== undefined && value < cfg.warnAt) return 'warning';
+  } else {
+    if (value > cfg.alertAt) return 'alert';
+    if (cfg.warnAt !== undefined && value > cfg.warnAt) return 'warning';
+  }
+  return 'calm';
 }
-const INCIDENT_ALERT_THRESHOLD = 5; // mock threshold: > 5 incidents/période = attention
+
+// Map state → tile fill. Tiles are NEUTRAL (plain surface) by default; a colored
+// fill appears ONLY for a real state — warning = amber, alert = red. Calm = no
+// fill, so the row stays quiet and the one thing that's actually wrong stands out.
+const stateFill = (state: KpiState): string | undefined =>
+  state === 'alert' ? 'danger' : state === 'warning' ? 'warning' : undefined;
 
 // Per-metric chart config: which KPI the trend chart shows when its card is
 // clicked (CHANGE A). Title/subtitle/color all switch with the selection.
@@ -45,6 +72,11 @@ const METRICS: Record<TrendMetric, { title: string; subtitle: string; color: str
     subtitle: 'Mises en charge (docking)',
     color: '#8B5CF6',
   },
+  disponibilite: {
+    title: 'Disponibilité par jour',
+    subtitle: '% opérationnel — journaux (variation réelle)',
+    color: 'var(--accent)',
+  },
 };
 
 // The one fully-built page. Status hero + four KPI cards + one period-switchable
@@ -56,15 +88,24 @@ export function Dashboard() {
   // selected trend metric — defaults to Rondes effectuées (CHANGE A)
   const [metric, setMetric] = useState<TrendMetric>('rounds');
   const [robot, setRobot] = useState<Robot | null>(null);
+  const [robotMissing, setRobotMissing] = useState(false);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [trend, setTrend] = useState<TrendSeries | null>(null);
+
+  const [infoStats, setInfoStats] = useState<InfoStats | null>(null);
   const [battery, setBattery] = useState<BatterySample[]>([]);
   const [breakdown, setBreakdown] = useState<Breakdown | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [lastTrack, setLastTrack] = useState<LastKnownTrack | null | undefined>(undefined);
 
   useEffect(() => {
-    getRobot(id).then((r) => setRobot(r ?? null));
-    fetchRecentAlerts(id, 4).then(setAlerts);
+    getRobot(id).then((r) => {
+      setRobot(r ?? null);
+      setRobotMissing(!r); // accessible id that doesn't resolve to a real robot
+    });
+    fetchRecentAlerts(id, 5).then(setAlerts);
+    fetchInfoStats(id, 30).then(setInfoStats);
+    fetchLastKnownTrack(id).then(setLastTrack);
   }, [id]);
 
   // trend re-fetches when robot, period OR the selected metric changes
@@ -75,6 +116,7 @@ export function Dashboard() {
       live = false;
     };
   }, [id, period, metric]);
+
 
   useEffect(() => {
     let live = true;
@@ -93,8 +135,24 @@ export function Dashboard() {
     };
   }, [id, period]);
 
+  // Keyboard accelerator: number keys 1–4 flip the trend metric so power users
+  // don't have to reach for the cards. Ignored with modifiers or while typing.
+  useEffect(() => {
+    const KEYS: Record<string, TrendMetric> = { '1': 'rounds', '2': 'incidents', '3': 'charges', '4': 'disponibilite' };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      const m = KEYS[e.key];
+      if (m) setMetric(m);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  if (robotMissing) return <RobotIntrouvable />;
   if (!robot || !summary || !trend || !breakdown) {
-    return <p className="text-sm text-muted">Chargement du tableau de bord…</p>;
+    return <DashboardSkeleton />;
   }
 
   const k = summary.kpis;
@@ -109,10 +167,16 @@ export function Dashboard() {
     ? Math.round(dockSamples.reduce((a, s) => a + s.pct, 0) / dockSamples.length)
     : null;
 
+  // alert-capable tiles resolve their fill from the threshold config; neutral
+  // tiles (Rondes, Cycles, Disponibilité) pass a fixed calm fill below.
+  const batteryFill = stateFill(kpiState(summary.status.battery, KPI_ALERTS.battery));
+  // incidents threshold is a per-day rate — normalize the period total first
+  const incidentsFill = stateFill(kpiState(k.incidents.value / periodDays, KPI_ALERTS.incidents));
+
   // Full-width column, natural content height (status bar + KPI row + compact
   // chart + alerts strip); the shell's <main> scrolls if it overflows.
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex min-h-screen w-full flex-col gap-6">
       <StatusBar robot={robot} />
 
       {/* KPI sentiment (drives the delta-badge color in KpiCard):
@@ -125,7 +189,7 @@ export function Dashboard() {
           (Incidents, with its extra caption line), so all five are identical
           rectangles regardless of content. */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <BatteryCard battery={summary.status.battery} />
+        <BatteryCard battery={summary.status.battery} fill={batteryFill} />
         <KpiCard
           label="Rondes effectuées"
           value={k.rounds.value}
@@ -133,7 +197,8 @@ export function Dashboard() {
           sentiment="higher-better"
           subtext={`Total période : ${k.rounds.value} · ~${roundsPerDay}/jour`}
           icon="M3 7l9-4 9 4-9 4zM3 7v10l9 4 9-4V7"
-          fill="mid"
+          hint="Rondes terminées automatiquement (Automatic_end) sur la période."
+          selected={metric === 'rounds'}
           onSelect={() => setMetric('rounds')}
         />
         <KpiCard
@@ -144,31 +209,46 @@ export function Dashboard() {
           subtext={`${breakdown.obstacles} obstacles · ${breakdown.emergencyStops} arrêts d'urgence`}
           note="≠ détections de sécurité"
           icon="M12 3l9 16H3zM12 10v4M12 17h.01"
+          hint="Proxy opérationnel : obstacles + arrêts d'urgence rencontrés par le robot. Ce ne sont pas des détections de sécurité."
           tone="danger"
-          fill={isAlert('higher-worse', k.incidents.value, INCIDENT_ALERT_THRESHOLD) ? 'danger' : 'danger-calm'}
+          fill={incidentsFill}
+          selected={metric === 'incidents'}
           onSelect={() => setMetric('incidents')}
-          emphasized={isAlert('higher-worse', k.incidents.value, INCIDENT_ALERT_THRESHOLD)}
         />
         <KpiCard
           label="Cycles de charge"
           value={k.chargeCycles.value}
           deltaPct={k.chargeCycles.deltaPct}
           sentiment="neutral"
-          subtext={dockBatteryAvg !== null ? `Batt. moy. au dock : ~${dockBatteryAvg}%` : undefined}
+          subtext={
+            infoStats
+              ? `Batt. médiane au dock : ${infoStats.docking.battery_at_dock_median}%`
+              : dockBatteryAvg !== null
+                ? `Batt. moy. au dock : ~${dockBatteryAvg}%`
+                : undefined
+          }
           icon="M13 2L4 14h6l-1 8 9-12h-6z"
-          fill="soft"
+          hint="Nombre de mises en charge (docking) enregistrées sur la période."
+          selected={metric === 'charges'}
           onSelect={() => setMetric('charges')}
         />
         <KpiCard
           label="Disponibilité"
-          value="à venir"
-          placeholder
-          subtext="Formule à définir (TODO)"
-          note="non dérivable des logs pour l'instant"
+          value={`${k.availability.value}%`}
+          subtext="Disponibilité opérationnelle (journaux)"
           icon="M12 8v4l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          fill="muted"
+          hint="Estimation opérationnelle dérivée des journaux d'état. Formule provisoire, susceptible d'évoluer."
+          selected={metric === 'disponibilite'}
+          onSelect={() => setMetric('disponibilite')}
         />
       </div>
+
+      {/* discoverability + power-user hint: cards drive the chart; 1–4 do the same */}
+      <p className="-mt-2 text-xs text-muted">
+        Cliquez une carte pour l'afficher dans le graphique, ou touches{' '}
+        <kbd className="rounded border border-border px-1 font-sans text-[11px]">1</kbd>–
+        <kbd className="rounded border border-border px-1 font-sans text-[11px]">4</kbd>.
+      </p>
 
       {/* balanced two-column rhythm (reference pairs two bottom panels): trend
           chart | alerts side by side on wide screens, stacked on narrow. */}
@@ -180,8 +260,52 @@ export function Dashboard() {
           title={METRICS[metric].title}
           subtitle={METRICS[metric].subtitle}
           color={METRICS[metric].color}
+          percent={metric === 'disponibilite'}
         />
         <AlertsStrip robotId={id} alerts={alerts} />
+      </div>
+
+
+      {/* Row 3: last known track + position mini-map */}
+      <section className="surface-card flex flex-col p-card">
+        <div className="mb-3">
+          <h3 className="text-[18px] font-medium">Dernière position et trajet</h3>
+          <p className="text-[13px] text-muted">
+            {lastTrack
+              ? `Dernier trajet journalisé — ${lastTrack.date.split('-').reverse().join('/')}`
+              : 'Dernier trajet journalisé'}
+          </p>
+        </div>
+        {lastTrack === undefined ? (
+          <div className="flex h-[300px] items-center justify-center">
+            <span className="text-sm text-muted">Chargement…</span>
+          </div>
+        ) : lastTrack === null ? (
+          <div className="flex h-[300px] items-center justify-center">
+            <span className="text-sm text-muted">Aucune donnée GPS disponible pour ce robot</span>
+          </div>
+        ) : (
+          <LastPositionMap track={lastTrack} />
+        )}
+      </section>
+    </div>
+  );
+}
+
+// Loading state: reserve the real layout footprint (status strip + 5 KPI cards +
+// chart + alerts) with shimmer blocks, so content drops in without a jump.
+function DashboardSkeleton() {
+  return (
+    <div className="flex w-full flex-col gap-6" aria-busy="true" aria-label="Chargement du tableau de bord">
+      <div className="skeleton h-12 w-full" />
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="skeleton h-[148px] w-full" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="skeleton h-[296px] w-full" />
+        <div className="skeleton h-[296px] w-full" />
       </div>
     </div>
   );

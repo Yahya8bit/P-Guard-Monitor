@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { landingPath } from '../auth/guards';
+import { LogoBadge } from '../components/LogoBadge';
 import { ThemeToggle } from '../components/ThemeToggle';
 
 // Demo accounts as role cards (icon + role + one-line description). Clicking one
@@ -69,16 +70,14 @@ export function Login() {
         <img src="/pguard.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
         {/* subtle extra darkening for text legibility (image has a baked gradient) */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-black/30" />
+        {/* soft top-left scrim that fades to transparent — no hard edges, just
+            enough to anchor the brand over the bright water */}
+        <div className="pointer-events-none absolute left-0 top-0 h-48 w-2/3 bg-gradient-to-br from-black/45 via-black/10 to-transparent" />
 
-        {/* top-left brand — dark scrim pill + drop-shadows so the transparent
-            mark and white text stay legible over the bright/busy photo */}
-        <div className="absolute left-6 top-6 flex items-center gap-3 rounded-xl bg-black/35 px-3 py-2 backdrop-blur-sm">
-          <img
-            src="/logo-transparent.png"
-            alt=""
-            className="h-11 w-11 object-contain [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.6))]"
-          />
-          <span className="text-[18px] font-semibold tracking-tight text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
+        {/* top-left brand — no box; legibility from soft drop/text-shadow */}
+        <div className="absolute left-6 top-6 flex items-center gap-4">
+          <LogoBadge sizeClass="h-14 w-14" mode="always" />
+          <span className="text-[28px] font-semibold tracking-tight text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.75)]">
             P-Guard <span className="text-accent">Monitor</span>
           </span>
         </div>
@@ -142,7 +141,7 @@ export function Login() {
 
           <div className="mt-6">
             <p className="mb-2 text-xs text-muted">
-              Comptes démo (mot de passe&nbsp;: <code className="text-text">demo</code>) — cliquez pour entrer
+              Comptes démo (mot de passe&nbsp;: <code className="text-text">demo</code>) : cliquez pour entrer
             </p>
             <div className="flex flex-col gap-2">
               {ROLES.map((r) => (

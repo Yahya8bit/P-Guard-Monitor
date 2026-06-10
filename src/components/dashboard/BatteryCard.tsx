@@ -3,9 +3,9 @@ import { batteryColor } from '../../lib/format';
 // "Niveau batterie" KPI-row card (5th card): big % value in the status color +
 // a one-line caption noting the value is event-sampled (no chart). Sizes to its
 // content like the other four cards.
-export function BatteryCard({ battery }: { battery: number }) {
+export function BatteryCard({ battery, fill }: { battery: number; fill?: string }) {
   return (
-    <div className="surface-card p-6" data-fill="deep">
+    <div className="surface-card p-6" data-fill={fill}>
       <div className="flex items-start justify-between">
         <span className="kpi-label text-base font-semibold text-text">Niveau batterie</span>
         {/* icon chip (teal on light, bare icon on dark) */}

@@ -13,18 +13,20 @@ interface Props {
   title: string;
   subtitle: string;
   color: string; // bar color for the selected metric (CSS var or hex)
+  percent?: boolean; // % metric (Disponibilité): fixed 0–100 axis + % tooltip
 }
 
-// Daily count trend as bars, period-switchable (7d / 30d). Title, subtitle and
-// bar color are driven by the KPI card selected on the dashboard (CHANGE A).
-export function TrendChart({ series, period, onPeriod, title, subtitle, color }: Props) {
+// Daily trend as bars, period-switchable (7d / 30d). Title, subtitle and bar
+// color are driven by the selected KPI card. `percent` switches to a 0–100 axis
+// for the Disponibilité metric (a rate, not a count).
+export function TrendChart({ series, period, onPeriod, title, subtitle, color, percent }: Props) {
   const data = series.points.map((p) => ({ ...p, label: p.t.slice(5) }));
 
-  // CHART FIX: y-axis max = (visible data max + 1) instead of a fixed 4, so the
-  // area fills most of the plot height. Integer ticks 0..yMax (no decimals).
+  // count metrics: y-axis max = data max + 1, integer ticks. percent metric:
+  // fixed 0–100 axis with quarter ticks.
   const dataMax = data.reduce((m, d) => Math.max(m, d.value), 0);
-  const yMax = dataMax + 1;
-  const yTicks = Array.from({ length: yMax + 1 }, (_, i) => i);
+  const yMax = percent ? 100 : dataMax + 1;
+  const yTicks = percent ? [0, 25, 50, 75, 100] : Array.from({ length: yMax + 1 }, (_, i) => i);
 
   return (
     // COMPACT: chart sizes to its content (no flex-1 grow) — a 0–3 count range
@@ -80,7 +82,7 @@ export function TrendChart({ series, period, onPeriod, title, subtitle, color }:
                 fontSize: 12,
                 color: 'var(--text)',
               }}
-              formatter={(v: number) => [v, title]}
+              formatter={(v: number) => [percent ? `${v}%` : v, title]}
             />
             {/* one bar per day (whole counts, no smooth interpolation); color
                 tracks the selected metric */}

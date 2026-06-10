@@ -6,11 +6,20 @@ import type {
   DashboardSummary,
   Granularity,
   Period,
+  ReportMeta,
   Robot,
+  RobotState,
   TrendSeries,
   User,
 } from '../types/contract';
 import { rngFor } from './random';
+// Real (log-derived) Disponibilité + Taux d'autonomie. Behind the same service
+// interface, so FastAPI can swap this JSON for a real endpoint later.
+import kpiSeed from './data/kpi_seed.json';
+// Real (log-derived) GPS patrol tracks, one polyline per round.
+import gpsSeed from './data/gps_seed.json';
+// Real (log-derived) Info/ stats (docking, obstacles, back_home, composition).
+import infoSeed from './data/info_seed.json';
 
 // ---------------------------------------------------------------------------
 // Fixed clock + span. The real unit logged Jun 2024 -> Jun 2026 (CLAUDE.md),
@@ -97,6 +106,158 @@ export const USERS: User[] = [
     assignedRobotIds: ['PG-001'],
   },
 ];
+
+// ---------------------------------------------------------------------------
+// ASSIGNMENT STORE (Gestion). USERS above is the single MUTABLE source of who
+// can access which robot (assignedRobotIds). These mutators change it in place,
+// so new assignments take effect on the next login, in the fleet view, and in
+// the route guards. Rules enforced here: a robot has AT MOST ONE admin and AT
+// MOST ONE client; a client has EXACTLY ONE robot (admins can have many).
+// ---------------------------------------------------------------------------
+// Persist assignments so they survive reloads (in-memory alone resets on a hard
+// refresh). USERS is hydrated from localStorage at module load and saved on every
+// mutation, so the fleet view and guards reflect the latest assignments.
+const USERS_KEY = 'pguard-users';
+function saveUsers(): void {
+  try {
+    localStorage.setItem(USERS_KEY, JSON.stringify(USERS));
+  } catch {
+    /* SSR / no storage */
+  }
+}
+(function hydrateUsers() {
+  try {
+    const raw = localStorage.getItem(USERS_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw) as User[];
+      USERS.length = 0;
+      for (const u of saved) USERS.push(u);
+    }
+  } catch {
+    /* ignore */
+  }
+})();
+
+export function getUsers(): User[] {
+  return USERS.map((u) => ({ ...u, assignedRobotIds: [...u.assignedRobotIds] })); // snapshot copy
+}
+export function adminOfRobot(robotId: string): string | null {
+  return USERS.find((u) => u.role === 'admin' && u.assignedRobotIds.includes(robotId))?.id ?? null;
+}
+export function clientOfRobot(robotId: string): string | null {
+  return USERS.find((u) => u.role === 'client' && u.assignedRobotIds.includes(robotId))?.id ?? null;
+}
+// Give a robot to one admin (or null = unassign). Removed from every other admin
+// first so it has a single owner.
+export function setRobotAdmin(robotId: string, adminId: string | null): void {
+  for (const u of USERS) {
+    if (u.role === 'admin') u.assignedRobotIds = u.assignedRobotIds.filter((r) => r !== robotId);
+  }
+  if (adminId) {
+    const a = USERS.find((u) => u.id === adminId);
+    if (a && !a.assignedRobotIds.includes(robotId)) a.assignedRobotIds.push(robotId);
+  }
+  saveUsers();
+}
+// One robot per client: the client ends up with exactly [robotId], and the robot
+// is removed from any other client (a robot maps to a single client).
+export function assignRobotToClient(robotId: string, clientId: string): void {
+  for (const u of USERS) {
+    if (u.role === 'client') u.assignedRobotIds = u.assignedRobotIds.filter((r) => r !== robotId);
+  }
+  const c = USERS.find((u) => u.id === clientId);
+  if (c) c.assignedRobotIds = [robotId];
+  saveUsers();
+}
+let clientSeq = 0;
+export function createClient(name: string, email: string): User {
+  const u: User = {
+    id: `u-client-${Date.now()}-${++clientSeq}`,
+    name,
+    email,
+    role: 'client',
+    assignedRobotIds: [],
+  };
+  USERS.push(u);
+  saveUsers();
+  return u;
+}
+
+// ── Creation (superadmin Gestion) ────────────────────────────────────────────
+// ROBOTS is also a mutable persisted source so added robots survive reloads and
+// show in the fleet + assignment list. Passwords for created users live in a
+// small overlay (the frozen User shape has no password field); login accepts the
+// stored password OR "demo".
+const ROBOTS_KEY = 'pguard-robots';
+function saveRobots(): void {
+  try {
+    localStorage.setItem(ROBOTS_KEY, JSON.stringify(ROBOTS));
+  } catch {
+    /* no storage */
+  }
+}
+(function hydrateRobots() {
+  try {
+    const raw = localStorage.getItem(ROBOTS_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw) as Robot[];
+      ROBOTS.length = 0;
+      for (const r of saved) ROBOTS.push(r);
+    }
+  } catch {
+    /* ignore */
+  }
+})();
+
+const PWD_KEY = 'pguard-pwds';
+function readPwds(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(PWD_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+export function passwordFor(email: string): string | undefined {
+  return readPwds()[email.trim().toLowerCase()];
+}
+function setPwd(email: string, pwd: string): void {
+  const m = readPwds();
+  m[email.trim().toLowerCase()] = pwd;
+  try {
+    localStorage.setItem(PWD_KEY, JSON.stringify(m));
+  } catch {
+    /* ignore */
+  }
+}
+
+function addUser(name: string, email: string, password: string, role: 'admin' | 'client'): User[] {
+  if (!name.trim() || !email.trim() || !password.trim()) throw new Error('Champs requis manquants');
+  if (USERS.some((u) => u.email.toLowerCase() === email.trim().toLowerCase())) throw new Error('Email déjà utilisé');
+  USERS.push({ id: `u-${role}-${Date.now()}`, name: name.trim(), email: email.trim(), role, assignedRobotIds: [] });
+  saveUsers();
+  setPwd(email, password);
+  return getUsers();
+}
+export const addAdmin = (name: string, email: string, password: string) => addUser(name, email, password, 'admin');
+export const addClient = (name: string, email: string, password: string) => addUser(name, email, password, 'client');
+
+export function addRobot(input: { name: string; site: string; state: RobotState; commissionedAt: string }): Robot[] {
+  const { name, site, state, commissionedAt } = input;
+  if (!name.trim() || !site.trim() || !commissionedAt) throw new Error('Champs requis manquants');
+  if (ROBOTS.some((r) => r.name.toLowerCase() === name.trim().toLowerCase())) throw new Error('Nom de robot déjà utilisé');
+  ROBOTS.push({
+    id: `PG-${String(ROBOTS.length + 1).padStart(3, '0')}`,
+    name: name.trim(),
+    site: site.trim(),
+    region: 'germany', // current deployment default (not in the form)
+    state,
+    currentMission: null,
+    battery: 100,
+    commissionedAt,
+  });
+  saveRobots();
+  return ROBOTS.map((r) => ({ ...r }));
+}
 
 // ---------------------------------------------------------------------------
 // THE SINGLE PER-ROBOT DATA SOURCE.
@@ -274,9 +435,8 @@ export function getDashboardSummary(robotId: string, period: Period): DashboardS
         deltaPct: charges.deltaPct,
         sparkline: charges.window.map((r) => r.charges),
       },
-      // Disponibilité: formula is TODO (CLAUDE.md). value is a placeholder the
-      // UI renders as "—"; do NOT treat it as a real availability figure.
-      availability: { value: 0, unit: '%' },
+      // Disponibilité: REAL now (log-derived, from kpi_seed.json overall).
+      availability: { value: Math.round(kpiSeed.overall.disponibilite), unit: '%' },
     },
   };
 }
@@ -296,25 +456,34 @@ export function getIncidentBreakdown(
   return { obstacles: total - emergencyStops, emergencyStops, total };
 }
 
-// Selectable daily-count metrics for the trend chart. Each maps to a DayRow
-// field, so a metric's bars over a period sum to that KPI card's total.
-export type TrendMetric = 'rounds' | 'incidents' | 'charges';
-const METRIC_FIELD: Record<TrendMetric, keyof DayRow> = {
+// Selectable trend metrics. The count metrics map to a DayRow field; disponibilité
+// is a daily % from kpi_seed (REAL, log-derived), not a count.
+export type TrendMetric = 'rounds' | 'incidents' | 'charges' | 'disponibilite';
+const METRIC_FIELD: Record<'rounds' | 'incidents' | 'charges', keyof DayRow> = {
   rounds: 'completed', // "Rondes effectuées" = Automatic_end
   incidents: 'incidents',
   charges: 'charges',
 };
 
-// Daily trend for the chosen count metric (bars). Plots the SAME field as the
-// matching KPI card so the per-day bars sum to the card total for the period.
+// Daily trend for the chosen metric. Count metrics → DayRow field (bars sum to
+// the KPI card). Disponibilité → daily % from kpi_seed aligned to the same dates.
 export function getMetricTrend(robotId: string, period: Period, metric: TrendMetric): TrendSeries {
   const rows = buildSeries(robotId);
   const days = periodDays(period);
+  const slice = rows.slice(rows.length - days);
+  if (metric === 'disponibilite') {
+    const dispoByDate = new Map(kpiSeed.daily.map((d) => [d.date, d.disponibilite]));
+    return {
+      metric,
+      granularity: 'daily',
+      points: slice.map((r) => ({ t: r.date, value: dispoByDate.get(r.date) ?? kpiSeed.overall.disponibilite })),
+    };
+  }
   const field = METRIC_FIELD[metric];
   return {
     metric,
     granularity: 'daily',
-    points: rows.slice(rows.length - days).map((r) => ({ t: r.date, value: r[field] as number })),
+    points: slice.map((r) => ({ t: r.date, value: r[field] as number })),
   };
 }
 
@@ -346,13 +515,26 @@ export function getBatterySamples(robotId: string, period: Period): BatterySampl
 // NOT in this pool. `docking_failed` here means a genuine failure with no
 // successful retry (intervention needed), severity warning. Every entry's
 // description matches its type, severity and outcome (no "échec … réussie").
+// EVENT → SEVERITY — SINGLE SOURCE OF TRUTH. A given description always carries
+// the same severity. Routine `info` events are NOT open alerts (no acquittement
+// state — see buildAlerts/detail panel); only warning/critical can be open.
+//   Info     : routine système (firmware, redémarrage normal), piéton ralenti
+//   Alerte   : obstacle ralenti/contourné, perte GPS temporaire, docking
+//              récupéré AUTOMATIQUEMENT
+//   Critique : collision évitée / freinage d'urgence, arrêt d'urgence (ronde
+//              interrompue), docking nécessitant intervention MANUELLE
 const ALERT_KINDS: { type: AlertType; severity: AlertSeverity; description: string }[] = [
-  { type: 'obstacle', severity: 'info', description: 'Piéton détecté — ralentissement temporaire' },
-  { type: 'obstacle', severity: 'warning', description: 'Obstacle imprévu — contournement effectué' },
-  { type: 'emergency_stop', severity: 'critical', description: "Arrêt d'urgence déclenché — ronde interrompue" },
-  { type: 'docking_failed', severity: 'warning', description: 'Échec de docking — intervention manuelle requise' },
+  // Info — routine / completed
   { type: 'system', severity: 'info', description: 'Mise à jour du firmware appliquée' },
+  { type: 'system', severity: 'info', description: 'Redémarrage normal du système' },
+  { type: 'obstacle', severity: 'info', description: 'Piéton détecté — ralentissement temporaire' },
+  // Alerte (warning) — handled / temporary / auto-recovered
+  { type: 'obstacle', severity: 'warning', description: 'Obstacle imprévu — contournement effectué' },
   { type: 'system', severity: 'warning', description: 'Perte temporaire du signal GPS' },
+  { type: 'docking_failed', severity: 'warning', description: 'Échec de docking — récupéré automatiquement' },
+  // Critique — serious
+  { type: 'emergency_stop', severity: 'critical', description: "Arrêt d'urgence déclenché — ronde interrompue" },
+  { type: 'docking_failed', severity: 'critical', description: 'Échec de docking — intervention manuelle requise' },
   { type: 'obstacle', severity: 'critical', description: "Collision évitée — freinage d'urgence" },
 ];
 
@@ -373,13 +555,16 @@ function buildAlerts(robotId: string): Alert[] {
     [order[i], order[j]] = [order[j], order[i]];
   }
 
-  const count = Math.min(6, ALERT_KINDS.length);
+  // ~26 events spread back across ~90 days so the Alertes page has a real list
+  // to filter; the dashboard panel just takes the most recent few. The first
+  // `order.length` use the shuffle (distinct kinds), then cycle through it.
+  const count = 26;
   const list: Alert[] = [];
   let cursor = NOW.getTime();
   for (let i = 0; i < count; i++) {
-    // step back a seeded 1.5h..14h between each event (most recent first)
-    cursor -= Math.round((1.5 + rnd() * 12.5) * 3_600_000);
-    const kind = ALERT_KINDS[order[i]];
+    // step back a seeded 2h..86h between each event (most recent first)
+    cursor -= Math.round((2 + rnd() * 84) * 3_600_000);
+    const kind = ALERT_KINDS[order[i % order.length]];
     list.push({
       id: `${robotId}-AL-${i}`,
       robotId,
@@ -389,16 +574,111 @@ function buildAlerts(robotId: string): Alert[] {
       missionId: rnd() > 0.4 ? `M-${1000 + Math.floor(rnd() * 9000)}` : null,
       description: kind.description,
       mediaUrl: null,
-      acknowledged: rnd() > 0.6,
+      // No seeded resolution — every alert starts "En cours". The resolution
+      // status now lives in a user-driven overlay (see resolution store below),
+      // not on this field. (rnd() kept to preserve the seeded event sequence.)
+      acknowledged: rnd() > 2 ? true : false,
     });
   }
   alertsCache.set(robotId, list); // already newest-first (cursor decreases)
   return list;
 }
 
-// Latest `limit` alerts for a robot, most recent first.
+// Latest `limit` alerts for a robot, most recent first (dashboard panel).
 export function getRecentAlerts(robotId: string, limit = 4): Alert[] {
   return buildAlerts(robotId).slice(0, limit);
+}
+
+// Full alert list for a robot (Alertes page) — same source as getRecentAlerts.
+export function getRobotAlerts(robotId: string): Alert[] {
+  return buildAlerts(robotId);
+}
+
+// ── Alert resolution overlay (user-driven, persisted) ────────────────────────
+// The frozen Alert shape has no resolution field, so the user's outcome lives in
+// a separate localStorage map keyed by alert id. No entry = "En cours" (default,
+// untreated). resolveAlert closes it (Résolu / Non résolu + required note +
+// resolvedBy/resolvedAt); reopenAlert clears it back to En cours.
+export type AlertStatus = 'open' | 'resolved' | 'unresolved';
+export interface AlertResolution {
+  status: 'resolved' | 'unresolved';
+  note: string;
+  resolvedBy: string;
+  resolvedAt: string;
+}
+const RES_KEY = 'pguard-alert-res';
+function readResolutions(): Record<string, AlertResolution> {
+  try {
+    return JSON.parse(localStorage.getItem(RES_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+function writeResolutions(map: Record<string, AlertResolution>): void {
+  try {
+    localStorage.setItem(RES_KEY, JSON.stringify(map));
+  } catch {
+    /* no storage */
+  }
+}
+export function getAlertResolutions(): Record<string, AlertResolution> {
+  return readResolutions();
+}
+export function resolveAlert(
+  id: string,
+  payload: { status: 'resolved' | 'unresolved'; note: string; resolvedBy: string },
+): Record<string, AlertResolution> {
+  const map = readResolutions();
+  map[id] = { ...payload, resolvedAt: new Date().toISOString() };
+  writeResolutions(map);
+  return map;
+}
+export function reopenAlert(id: string): Record<string, AlertResolution> {
+  const map = readResolutions();
+  delete map[id];
+  writeResolutions(map);
+  return map;
+}
+
+// GPS patrol tracks (one ordered polyline per round). Filter by date range and
+// (optionally) deployment region. Same shape a FastAPI endpoint would return.
+export type Deployment = 'tunisia' | 'germany';
+export interface PatrolTrack {
+  date: string;
+  mission: string;
+  deployment: Deployment;
+  points: [number, number][];
+}
+export function getPatrolTracks(opts: { robotId?: string; deployment?: Deployment; fromDate?: string; toDate?: string }): PatrolTrack[] {
+  const { robotId, deployment, fromDate, toDate } = opts;
+  // GPS data only exists for PG-001 (the real unit). All other robots have no tracks.
+  if (robotId && robotId !== 'PG-001') return [];
+  return (gpsSeed.tracks as PatrolTrack[]).filter((t) => {
+    if (deployment && t.deployment !== deployment) return false;
+    if (fromDate && t.date < fromDate) return false;
+    if (toDate && t.date > toDate) return false;
+    return true;
+  });
+}
+
+// Seeded report history (frozen ReportMeta contract) so the Historique list
+// isn't empty. Newly generated reports are prepended client-side on the page.
+export function getReportHistory(robotId: string): ReportMeta[] {
+  const rnd = rngFor(robotId + ':reports');
+  const seeds: { period: Period; format: 'pdf' | 'csv'; daysAgo: number }[] = [
+    { period: '30d', format: 'pdf', daysAgo: 2 },
+    { period: '7d', format: 'csv', daysAgo: 9 },
+    { period: 'custom', format: 'pdf', daysAgo: 24 },
+    { period: '30d', format: 'csv', daysAgo: 38 },
+  ];
+  return seeds.map((s, i) => ({
+    id: `${robotId}-R-${i}`,
+    robotId,
+    period: s.period,
+    format: s.format,
+    generatedAt: new Date(NOW.getTime() - s.daysAgo * 86_400_000).toISOString(),
+    sizeKb: 40 + Math.floor(rnd() * 220),
+  }));
 }
 
 // ===========================================================================
@@ -501,14 +781,20 @@ export interface StatsBundle {
     dockingTotal: number;
     distanceKm: number;
     avgRoundMin: number; // avg completed-round duration (minutes)
+    disponibilite: number; // % — REAL (kpi_seed overall)
+    autonomie: number; // % — REAL (kpi_seed overall)
   };
   roundsSuccess: { label: string; completed: number; interrupted: number }[];
   emergency: { label: string; value: number }[];
   distance: { label: string; value: number }[];
+  dispoTrend: { label: string; value: number }[]; // daily Disponibilité (real values)
+  autonomieTrend: { label: string; value: number }[]; // daily Taux d'autonomie (real values)
   hourly: { matrix: number[][]; max: number };
 }
 
-export function getStatistics(robotId: string, days: RangeDays, gran: Granularity): StatsBundle {
+// `days` is a number so reports can pass arbitrary windows (e.g. "mois en
+// cours"); the Statistiques page passes RangeDays (a subset).
+export function getStatistics(robotId: string, days: number, gran: Granularity): StatsBundle {
   const rows = buildSeries(robotId).slice(-days);
   const dist = distanceByDay(robotId).slice(-days);
   const dates = rows.map((r) => r.date);
@@ -549,6 +835,24 @@ export function getStatistics(robotId: string, days: RangeDays, gran: Granularit
     .reduce((a, b) => a + b, 0);
   const avgRoundMin = completed ? Math.round(totalMin / completed) : 0;
 
+  // Disponibilité — REAL daily values from kpi_seed.json, bucketed by averaging
+  // (keeps the real day-to-day variation, including the low days ~50%).
+  const dispoByDate = new Map(kpiSeed.daily.map((d) => [d.date, d.disponibilite]));
+  const dispoTrend = buckets.map((b) => {
+    const vals = b.rows.map((i) => dispoByDate.get(dates[i]) ?? kpiSeed.overall.disponibilite);
+    const avg = vals.reduce((a, v) => a + v, 0) / (vals.length || 1);
+    return { label: b.label, value: Math.round(avg * 10) / 10 };
+  });
+
+  // Taux d'autonomie — REAL daily values from kpi_seed.json, bucketed by
+  // averaging (same treatment as dispoTrend).
+  const autoByDate = new Map(kpiSeed.daily.map((d) => [d.date, d.autonomie]));
+  const autonomieTrend = buckets.map((b) => {
+    const vals = b.rows.map((i) => autoByDate.get(dates[i]) ?? kpiSeed.overall.autonomie);
+    const avg = vals.reduce((a, v) => a + v, 0) / (vals.length || 1);
+    return { label: b.label, value: Math.round(avg * 10) / 10 };
+  });
+
   return {
     summary: {
       missionRate: total ? Math.round((completed / total) * 100) : 0,
@@ -560,10 +864,121 @@ export function getStatistics(robotId: string, days: RangeDays, gran: Granularit
       dockingTotal,
       distanceKm,
       avgRoundMin,
+      disponibilite: kpiSeed.overall.disponibilite,
+      autonomie: kpiSeed.overall.autonomie,
     },
     roundsSuccess,
     emergency,
     distance,
+    dispoTrend,
+    autonomieTrend,
     hourly: hourlyActivity(robotId, days),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Info/ log stats. Only PG-001 has real log history; all others return null.
+// `days` filters the composition daily[] for the period; overall aggregates
+// (docking rates, battery median, obstacle delay) are always all-time values.
+
+const REAL_ROBOT_ID = 'PG-001';
+
+export interface InfoStats {
+  docking: {
+    procedures_total: number;
+    procedures_succeeded: number;
+    procedures_failed: number;
+    success_rate: number;
+    attempts_per_procedure_mean: number;
+    battery_at_dock_median: number;
+    daily: { label: string; succeeded: number; failed: number }[];
+  };
+  obstacles: {
+    events_total: number;
+    delay_s_mean: number;
+  };
+  obstaclesPeriod: {
+    events_total: number;
+    delay_s_mean: number;
+  };
+  back_home: {
+    returns_total: number;
+    home_reached: number;
+    not_reached: number;
+    success_rate: number;
+    daily: { label: string; reached: number; not_reached: number }[];
+  };
+}
+
+export function getInfoStats(robotId: string, days: number): InfoStats | null {
+  if (robotId !== REAL_ROBOT_ID) return null;
+
+  const cutoff = new Date(NOW.getTime() - days * 86_400_000).toISOString().slice(0, 10);
+
+  const dockSlice = infoSeed.docking.daily.filter((d) => d.date >= cutoff);
+  const dockingDaily = dockSlice.map((d) => ({
+    label: d.date.slice(5),
+    succeeded: d.succeeded,
+    failed: d.failures,
+  }));
+  const dockTotal = dockSlice.reduce((a, d) => a + d.procedures, 0);
+  const dockSucc  = dockSlice.reduce((a, d) => a + d.succeeded, 0);
+  const dockFail  = dockTotal - dockSucc;
+
+  const obsSlice = (infoSeed.obstacles.daily as { date: string; count: number; delay_s_total: number }[]).filter((d) => d.date >= cutoff);
+  const obsTotal = obsSlice.reduce((a, d) => a + d.count, 0);
+  const obsDelayTotal = obsSlice.reduce((a, d) => a + d.delay_s_total, 0);
+  const obsDelayMean = obsTotal > 0 ? obsDelayTotal / obsTotal : 0;
+
+  const bhSlice = infoSeed.back_home.daily.filter((d) => d.date >= cutoff);
+  const bhDaily = bhSlice.map((d) => ({
+    label: d.date.slice(5),
+    reached: d.reached,
+    not_reached: d.returns - d.reached,
+  }));
+  const bhTotal   = bhSlice.reduce((a, d) => a + d.returns, 0);
+  const bhReached = bhSlice.reduce((a, d) => a + d.reached, 0);
+
+  return {
+    docking: {
+      procedures_total:            dockTotal,
+      procedures_succeeded:        dockSucc,
+      procedures_failed:           dockFail,
+      success_rate:                infoSeed.docking.success_rate,
+      attempts_per_procedure_mean: infoSeed.docking.attempts_per_procedure_mean,
+      battery_at_dock_median:      infoSeed.docking.battery_at_dock.median as number,
+      daily:                       dockingDaily,
+    },
+    obstacles: {
+      events_total: infoSeed.obstacles.events_total,
+      delay_s_mean: infoSeed.obstacles.delay_s.mean as number,
+    },
+    obstaclesPeriod: {
+      events_total: obsTotal,
+      delay_s_mean:  obsDelayMean,
+    },
+    back_home: {
+      returns_total: bhTotal,
+      home_reached:  bhReached,
+      not_reached:   bhTotal - bhReached,
+      success_rate:  infoSeed.back_home.success_rate as number,
+      daily:         bhDaily,
+    },
+  };
+}
+
+export interface LastKnownTrack {
+  date: string;          // ISO YYYY-MM-DD
+  mission: string;
+  points: [number, number][];
+  lastPoint: [number, number];
+}
+
+export function getLastKnownTrack(robotId: string): LastKnownTrack | null {
+  if (robotId !== REAL_ROBOT_ID) return null;
+  const sorted = [...(gpsSeed.tracks as PatrolTrack[])].sort((a, b) => a.date.localeCompare(b.date));
+  const last = sorted[sorted.length - 1];
+  if (!last || !last.points.length) return null;
+  const points = last.points as [number, number][];
+  return { date: last.date, mission: last.mission, points, lastPoint: points[points.length - 1] };
 }

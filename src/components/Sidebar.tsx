@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { LogoBadge } from './LogoBadge';
 
 // Robot-scoped sections + the global Gestion link. `Gestion` is removed from
 // the list entirely for clients (not just hidden) — the route guard backs this.
@@ -42,7 +43,7 @@ export function Sidebar({ activeRobotId, onNavigate }: Props) {
     <nav className="flex h-full flex-col p-4" aria-label="Navigation principale">
       {/* brand — clear header: 44px mark, 19px name, generous padding all round */}
       <div className="mb-8 flex items-center gap-3 px-3 pb-3 pt-4">
-        <img src="/logo-transparent.png" alt="" className="h-14 w-14 object-contain" />
+        <LogoBadge sizeClass="h-12 w-12" mode="auto" />
         <span className="text-[20px] font-semibold tracking-tight">
           P-Guard <span className="text-accent">Monitor</span>
         </span>
