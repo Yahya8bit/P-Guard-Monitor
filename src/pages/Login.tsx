@@ -67,7 +67,14 @@ export function Login() {
       {/* LEFT — branded image panel (top banner on narrow, 55% on wide).
           login-bg gradient sits behind as a fallback if the image fails. */}
       <aside className="login-bg relative h-44 shrink-0 overflow-hidden lg:h-auto lg:w-[55%]">
-        <img src="/pguard.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img
+          src="/robot-hero.webp"
+          alt=""
+          loading="eager"
+          fetchPriority="high"
+          style={{ backgroundImage: 'url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P/wAARCAAKAAoDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDNgfTr5Y4bhPJKRHDp2HTJ9eatDw/pBHFxOR6huD+lcx2H0rQSeYIoEsmMf3jTdNX3MpVmlsj/2Q==")', backgroundSize: 'cover', filter: 'blur(0)' }}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
         {/* subtle extra darkening for text legibility (image has a baked gradient) */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-black/30" />
         {/* soft top-left scrim that fades to transparent — no hard edges, just

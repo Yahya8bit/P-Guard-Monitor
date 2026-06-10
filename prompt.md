@@ -1,17 +1,26 @@
 Use claude-sonnet-4-5 for this task.
 
-Fix the dark-mode rendering of the "Dernière position et trajet" map on the Dashboard (and check the Statistiques map for the same bug): the basemap renders as a solid dark void — tiles are not displayed — while the polyline and markers render fine.
+The login page hero image loads slowly on Vercel. Fix this:
 
-**1. Force TileLayer remount on theme change**
-react-leaflet does not reload tiles when the url prop changes. Give the TileLayer a key tied to the theme:
-<TileLayer key={theme} url={theme === 'dark' ? DARK_URL : LIGHT_URL} attribution={...} />
-DARK_URL: https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png
-LIGHT_URL: https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png
+**1. Convert the image to WebP**
+In the terminal, run this to check the current image file name and size:
+ls -lh public/ && find src/assets -type f | head -20
+Then convert it to WebP using:
+cwebp -q 80 <current-image-path> -o public/robot-hero.webp
+If cwebp is not installed: ffmpeg -i <current-image-path> -q:v 80 public/robot-hero.webp
+If neither is available, use Python:
+python3 -c "from PIL import Image; img=Image.open('<path>'); img.save('public/robot-hero.webp', 'webp', quality=80)"
 
-**2. Verify nothing covers the tiles**
-Check that no dark-theme CSS sets a background/filter on .leaflet-container or its tile panes that hides tiles. The container background can stay dark as a loading backdrop, but tiles must render above it. Open the browser console and report any 4xx on tile requests if the key fix isn't enough.
+**2. Update the Login component**
+Replace the current <img> or background-image reference with:
+- Use an <img> tag (not CSS background) with:
+  - src="robot-hero.webp"
+  - loading="eager" (it's above the fold)
+  - fetchpriority="high"
+  - A small base64 placeholder as a blurred background while loading (generate a 10px thumbnail)
+- Or if it's a CSS background-image, switch to an <img> tag for better browser optimization
 
-**3. Style the zoom controls for dark mode**
-Add CSS so .leaflet-control-zoom buttons follow the theme (dark background, light icon, subtle border in dark mode) instead of the default white.
+**3. Add to vite.config.ts**
+Ensure the image is served with proper cache headers by confirming the public/ folder is used (not assets/ which gets hashed). If it's in assets/, move it to public/.
 
-Apply the same fixes to the Statistiques "Trajet de patrouille (GPS)" map if it shares the issue.
+Report the before/after file size.

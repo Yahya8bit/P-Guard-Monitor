@@ -97,25 +97,34 @@ export function Dashboard() {
   const [breakdown, setBreakdown] = useState<Breakdown | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [lastTrack, setLastTrack] = useState<LastKnownTrack | null | undefined>(undefined);
+  // network failure on the data the page can't render without; retryKey re-runs
+  // the failed effects when the user clicks Réessayer
+  const [loadError, setLoadError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
-    getRobot(id).then((r) => {
-      setRobot(r ?? null);
-      setRobotMissing(!r); // accessible id that doesn't resolve to a real robot
-    });
-    fetchRecentAlerts(id, 5).then(setAlerts);
-    fetchInfoStats(id, 30).then(setInfoStats);
-    fetchLastKnownTrack(id).then(setLastTrack);
-  }, [id]);
+    getRobot(id)
+      .then((r) => {
+        setRobot(r ?? null);
+        setRobotMissing(!r); // accessible id that doesn't resolve to a real robot
+      })
+      .catch(() => setLoadError(true));
+    // secondary data: a failure degrades to the empty/absent state, never blocks
+    fetchRecentAlerts(id, 5).then(setAlerts).catch(() => setAlerts([]));
+    fetchInfoStats(id, 30).then(setInfoStats).catch(() => setInfoStats(null));
+    fetchLastKnownTrack(id).then(setLastTrack).catch(() => setLastTrack(null));
+  }, [id, retryKey]);
 
   // trend re-fetches when robot, period OR the selected metric changes
   useEffect(() => {
     let live = true;
-    fetchMetricTrend(id, period, metric).then((t) => live && setTrend(t));
+    fetchMetricTrend(id, period, metric)
+      .then((t) => live && setTrend(t))
+      .catch(() => live && setLoadError(true));
     return () => {
       live = false;
     };
-  }, [id, period, metric]);
+  }, [id, period, metric, retryKey]);
 
 
   useEffect(() => {
@@ -124,16 +133,18 @@ export function Dashboard() {
       fetchDashboard(id, period),
       fetchBatterySamples(id, period),
       fetchIncidentBreakdown(id, period),
-    ]).then(([s, b, br]) => {
-      if (!live) return;
-      setSummary(s);
-      setBattery(b);
-      setBreakdown(br);
-    });
+    ])
+      .then(([s, b, br]) => {
+        if (!live) return;
+        setSummary(s);
+        setBattery(b);
+        setBreakdown(br);
+      })
+      .catch(() => live && setLoadError(true));
     return () => {
       live = false;
     };
-  }, [id, period]);
+  }, [id, period, retryKey]);
 
   // Keyboard accelerator: number keys 1–4 flip the trend metric so power users
   // don't have to reach for the cards. Ignored with modifiers or while typing.
@@ -151,6 +162,16 @@ export function Dashboard() {
   }, []);
 
   if (robotMissing) return <RobotIntrouvable />;
+  if (loadError) {
+    return (
+      <DashboardLoadError
+        onRetry={() => {
+          setLoadError(false);
+          setRetryKey((k) => k + 1);
+        }}
+      />
+    );
+  }
   if (!robot || !summary || !trend || !breakdown) {
     return <DashboardSkeleton />;
   }
@@ -288,6 +309,34 @@ export function Dashboard() {
           <LastPositionMap track={lastTrack} />
         )}
       </section>
+    </div>
+  );
+}
+
+// Network-failure state: shown when data the page can't render without fails to
+// load. Plain language + a retry action, per the error-recovery heuristic.
+function DashboardLoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex min-h-[60vh] w-full items-center justify-center" role="alert">
+      <div className="surface-card flex max-w-md flex-col items-center gap-4 p-card text-center">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <div>
+          <h2 className="text-[18px] font-medium">Impossible de charger le tableau de bord</h2>
+          <p className="mt-1 text-sm text-muted">
+            Les données du robot n'ont pas pu être récupérées. Vérifiez votre connexion, puis réessayez.
+          </p>
+        </div>
+        <button
+          onClick={onRetry}
+          className="rounded-btn bg-accent px-4 py-2 text-sm font-medium text-[#04201d] transition-colors hover:bg-accent-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          Réessayer
+        </button>
+      </div>
     </div>
   );
 }
