@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git conventions
+
+- No AI attribution anywhere: no `Co-Authored-By: Claude ...` trailers in
+  commit messages, no "🤖 Generated with Claude Code" footer in PR bodies.
+  Plain subject + body only.
+
 ## Commands
 
 - `npm run dev` — Vite dev server (HMR) for the app.
