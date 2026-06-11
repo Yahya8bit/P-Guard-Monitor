@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components -- guards + their helpers live together by design */
 import type { ReactNode } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import type { Role, User } from '../types/contract';
 import { useAuth } from './AuthContext';
 
@@ -8,7 +8,10 @@ import { useAuth } from './AuthContext';
 // they land straight on their single robot's dashboard (CLAUDE.md).
 export function landingPath(user: User): string {
   if (user.role === 'client') {
-    return `/robots/${user.assignedRobotIds[0]}/dashboard`;
+    // Never interpolate a missing id ("/robots/undefined"); an unassigned
+    // client gets a sentinel the robot guard resolves to RobotIntrouvable.
+    const rid = user.assignedRobotIds[0];
+    return `/robots/${rid ?? 'unassigned'}/dashboard`;
   }
   return '/fleet';
 }
@@ -34,16 +37,31 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
   return <>{children}</>;
 }
 
-// Calm fallback when a robot id can't be resolved — never a blank page.
+// Calm fallback when a robot id can't be resolved — never a blank page, and
+// never a trap: Logout stays reachable even with zero accessible robots.
 export function RobotIntrouvable() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   return (
     <div className="grid min-h-[40vh] place-items-center p-8 text-center">
       <div>
         <div className="text-lg font-semibold">Robot introuvable</div>
         <p className="mt-1 text-sm text-muted">Le robot demandé n'existe pas ou ne vous est pas accessible.</p>
-        <a href="/" className="mt-4 inline-block text-sm font-medium text-accent hover:underline">
-          Retour →
-        </a>
+        <div className="mt-4 flex items-center justify-center gap-4">
+          <a href="/" className="text-sm font-medium text-accent hover:underline">
+            Retour →
+          </a>
+          <button
+            type="button"
+            onClick={() => {
+              logout();
+              navigate('/login', { replace: true });
+            }}
+            className="text-sm font-medium text-muted hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   );

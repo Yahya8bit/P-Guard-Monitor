@@ -8,6 +8,7 @@ import type {
   Period,
   ReportMeta,
   Robot,
+  Role,
   RobotState,
   TrendSeries,
   User,
@@ -118,6 +119,21 @@ export const USERS: User[] = [
 // refresh). USERS is hydrated from localStorage at module load and saved on every
 // mutation, so the fleet view and guards reflect the latest assignments.
 const USERS_KEY = 'pguard-users';
+// Seed snapshot taken before hydration, so corrupt/empty localStorage can never
+// leave the app without the demo users or their baseline robot assignments.
+const USER_SEED: User[] = USERS.map((u) => ({ ...u, assignedRobotIds: [...u.assignedRobotIds] }));
+const ROLES: Role[] = ['superadmin', 'admin', 'client'];
+function isValidUser(u: unknown): u is User {
+  if (!u || typeof u !== 'object') return false;
+  const c = u as User;
+  return (
+    typeof c.id === 'string' && c.id.length > 0 &&
+    typeof c.email === 'string' && c.email.length > 0 &&
+    ROLES.includes(c.role) &&
+    Array.isArray(c.assignedRobotIds) &&
+    c.assignedRobotIds.every((r) => typeof r === 'string' && r.length > 0)
+  );
+}
 function saveUsers(): void {
   try {
     localStorage.setItem(USERS_KEY, JSON.stringify(USERS));
@@ -129,9 +145,23 @@ function saveUsers(): void {
   try {
     const raw = localStorage.getItem(USERS_KEY);
     if (raw) {
-      const saved = JSON.parse(raw) as User[];
-      USERS.length = 0;
-      for (const u of saved) USERS.push(u);
+      const saved = JSON.parse(raw) as unknown;
+      if (Array.isArray(saved) && saved.length > 0 && saved.every(isValidUser)) {
+        USERS.length = 0;
+        for (const u of saved) USERS.push(u);
+      } else {
+        localStorage.removeItem(USERS_KEY); // corrupt/empty store — keep the seed
+      }
+    }
+    // The demo users must always exist and (for admin/client) keep at least one
+    // robot — a broken saved store must never strand a login on zero robots.
+    for (const seed of USER_SEED) {
+      const live = USERS.find((u) => u.email.toLowerCase() === seed.email.toLowerCase());
+      if (!live) {
+        USERS.push({ ...seed, assignedRobotIds: [...seed.assignedRobotIds] });
+      } else if (live.assignedRobotIds.length === 0) {
+        live.assignedRobotIds = [...seed.assignedRobotIds];
+      }
     }
   } catch {
     /* ignore */
@@ -196,13 +226,22 @@ function saveRobots(): void {
     /* no storage */
   }
 }
+function isValidRobot(r: unknown): r is Robot {
+  return !!r && typeof r === 'object' && typeof (r as Robot).id === 'string' && (r as Robot).id.length > 0;
+}
 (function hydrateRobots() {
   try {
     const raw = localStorage.getItem(ROBOTS_KEY);
     if (raw) {
-      const saved = JSON.parse(raw) as Robot[];
-      ROBOTS.length = 0;
-      for (const r of saved) ROBOTS.push(r);
+      const saved = JSON.parse(raw) as unknown;
+      // An empty or malformed saved fleet must never wipe the seed — that would
+      // leave every user with zero robots and a /robots/undefined landing.
+      if (Array.isArray(saved) && saved.length > 0 && saved.every(isValidRobot)) {
+        ROBOTS.length = 0;
+        for (const r of saved) ROBOTS.push(r);
+      } else {
+        localStorage.removeItem(ROBOTS_KEY);
+      }
     }
   } catch {
     /* ignore */

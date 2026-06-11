@@ -164,6 +164,14 @@ export async function fetchLastKnownTrack(robotId: string): Promise<LastKnownTra
 }
 export type { LastKnownTrack };
 
+// Session restore: re-resolve the persisted user against the live USERS store
+// so a stale localStorage snapshot (e.g. empty assignedRobotIds) never drives
+// routing. Returns null when the user no longer exists → forces re-login.
+export function refreshSessionUser(id: string): User | null {
+  const u = USERS.find((x) => x.id === id);
+  return u ? { ...u, assignedRobotIds: [...u.assignedRobotIds] } : null;
+}
+
 export async function login(email: string, password: string): Promise<User> {
   const user = USERS.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
   const ok = password === 'demo' || passwordFor(email) === password;

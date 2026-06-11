@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { User } from '../types/contract';
-import { login as apiLogin } from '../services/api';
+import { login as apiLogin, refreshSessionUser } from '../services/api';
 
 const STORAGE_KEY = 'pguard-user';
 
@@ -18,7 +18,13 @@ const Ctx = createContext<AuthCtx | null>(null);
 function restore(): User | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as User) : null;
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as User;
+    if (!saved || typeof saved.id !== 'string' || !saved.id) return null;
+    // Re-resolve against the live user store: assignments may have changed since
+    // the snapshot was written, and a stale empty assignedRobotIds must never
+    // route a client to /robots/undefined.
+    return refreshSessionUser(saved.id);
   } catch {
     return null;
   }

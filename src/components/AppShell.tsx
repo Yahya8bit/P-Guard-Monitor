@@ -53,7 +53,7 @@ export function AppShell() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar title={title} onMenu={() => setDrawerOpen(true)} />
+        <TopBar title={title} onMenu={() => setDrawerOpen(true)} showLogout={false} />
         {/* flex-1 fills the height under the top bar; min-h-0 lets inner flex
             children shrink; content scrolls here if it exceeds the viewport. */}
         <main className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
