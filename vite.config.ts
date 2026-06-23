@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 // CLAUDE.md (node screenshot.mjs http://localhost:3000).
 export default defineConfig({
   plugins: [react()],
-  server: { port: 3000, host: true, strictPort: true },
+  publicDir: 'images',
+server: { port: 3000, host: true, strictPort: true },
   preview: { port: 3000 },
 });

@@ -3,7 +3,7 @@
 // src/index.css (:root[data-theme="dark"|"light"]). Switching the data-theme
 // attribute on <html> re-themes every Tailwind class that references a var.
 export default {
-  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  content: ['./index.html', './frontend/src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
