@@ -1,58 +1,36 @@
-// Public mock-service surface. Everything is async + returns the frozen
-// contract shapes, so swapping these bodies for real `fetch` calls later needs
-// no change at the call sites. Data itself is deterministic (see mock.ts).
-import type { Alert, BatterySample, DashboardSummary, Granularity, Period, ReportMeta, Robot, RobotState, TrendSeries, User } from '../types/contract';
-import {
-  ROBOTS,
-  USERS,
-  addAdmin,
-  addClient,
-  addRobot,
-  passwordFor,
-  getBatterySamples,
-  getDashboardSummary,
-  getIncidentBreakdown,
-  assignRobotToClient,
-  createClient,
-  getMetricTrend,
-  getRecentAlerts,
-  getAlertResolutions,
-  getPatrolTracks,
-  getReportHistory,
-  getRobotAlerts,
-  getStatistics,
-  reopenAlert,
-  resolveAlert,
-  getInfoStats,
-  type AlertResolution,
-  type Deployment,
-  type PatrolTrack,
-  getUsers,
-  setRobotAdmin,
-  type InfoStats,
-  type RangeDays,
-  type StatsBundle,
-  type TrendMetric,
-  getLastKnownTrack,
-  type LastKnownTrack,
-  removeAdmin,
-  removeClient,
-} from './mock';
-
-// tiny fake latency so loading states are exercisable
-const delay = <T>(value: T, ms = 120): Promise<T> =>
-  new Promise((resolve) => setTimeout(() => resolve(value), ms));
+// Everything here hits the real Django backend and returns the frozen contract shapes.
+import type {
+  Alert,
+  AlertResolution,
+  BatterySample,
+  DashboardSummary,
+  Deployment,
+  Granularity,
+  InfoStats,
+  LastKnownTrack,
+  PatrolTrack,
+  Period,
+  RangeDays,
+  ReportMeta,
+  Robot,
+  RobotState,
+  StatsBundle,
+  TrendMetric,
+  TrendSeries,
+  User,
+} from '../types/contract';
+import { apiFetch, setToken } from './http';
 
 export async function listRobots(): Promise<Robot[]> {
-  return delay(ROBOTS);
+  return apiFetch<Robot[]>('/robots/');
 }
 
 export async function getRobot(id: string): Promise<Robot | undefined> {
-  return delay(ROBOTS.find((r) => r.id === id));
+  return apiFetch<Robot>(`/robots/${id}/`).catch(() => undefined);
 }
 
 export async function fetchDashboard(robotId: string, period: Period): Promise<DashboardSummary> {
-  return delay(getDashboardSummary(robotId, period));
+  return apiFetch<DashboardSummary>(`/robots/${robotId}/dashboard/?period=${period}`);
 }
 
 export async function fetchMetricTrend(
@@ -60,40 +38,45 @@ export async function fetchMetricTrend(
   period: Period,
   metric: TrendMetric,
 ): Promise<TrendSeries> {
-  return delay(getMetricTrend(robotId, period, metric));
+  return apiFetch<TrendSeries>(`/robots/${robotId}/trend/?period=${period}&metric=${metric}`);
 }
 
 export async function fetchBatterySamples(robotId: string, period: Period): Promise<BatterySample[]> {
-  return delay(getBatterySamples(robotId, period));
+  return apiFetch<BatterySample[]>(`/robots/${robotId}/battery/?period=${period}`);
 }
 
 export async function fetchIncidentBreakdown(robotId: string, period: Period) {
-  return delay(getIncidentBreakdown(robotId, period));
+  return apiFetch<{ obstacles: number; emergencyStops: number; total: number }>(
+    `/robots/${robotId}/incidents-breakdown/?period=${period}`,
+  );
 }
 
 export async function fetchRecentAlerts(robotId: string, limit = 4): Promise<Alert[]> {
-  return delay(getRecentAlerts(robotId, limit));
+  return apiFetch<Alert[]>(`/robots/${robotId}/alerts/?limit=${limit}`);
 }
 
 export async function fetchRobotAlerts(robotId: string): Promise<Alert[]> {
-  return delay(getRobotAlerts(robotId));
+  return apiFetch<Alert[]>(`/robots/${robotId}/alerts/`);
 }
 
 export async function fetchAlertResolutions(): Promise<Record<string, AlertResolution>> {
-  return delay(getAlertResolutions(), 40);
+  return apiFetch<Record<string, AlertResolution>>('/alerts/resolutions/');
 }
 export async function submitAlertResolution(
   id: string,
   payload: { status: 'resolved' | 'unresolved'; note: string; resolvedBy: string },
 ): Promise<Record<string, AlertResolution>> {
-  return delay(resolveAlert(id, payload), 40);
+  return apiFetch<Record<string, AlertResolution>>(`/alerts/${id}/resolve/`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 export async function submitAlertReopen(id: string): Promise<Record<string, AlertResolution>> {
-  return delay(reopenAlert(id), 40);
+  return apiFetch<Record<string, AlertResolution>>(`/alerts/${id}/reopen/`, { method: 'POST' });
 }
 
 export async function fetchReportHistory(robotId: string): Promise<ReportMeta[]> {
-  return delay(getReportHistory(robotId));
+  return apiFetch<ReportMeta[]>(`/robots/${robotId}/reports/`);
 }
 
 export async function fetchPatrolTracks(opts: {
@@ -102,13 +85,18 @@ export async function fetchPatrolTracks(opts: {
   fromDate?: string;
   toDate?: string;
 }): Promise<PatrolTrack[]> {
-  return delay(getPatrolTracks(opts));
+  const params = new URLSearchParams();
+  if (opts.robotId) params.set('robotId', opts.robotId);
+  if (opts.deployment) params.set('deployment', opts.deployment);
+  if (opts.fromDate) params.set('fromDate', opts.fromDate);
+  if (opts.toDate) params.set('toDate', opts.toDate);
+  return apiFetch<PatrolTrack[]>(`/patrol-tracks/?${params.toString()}`);
 }
 
 // Report content reads the SAME stats source as the dashboard/Statistiques, so a
 // generated report matches what those pages show for the period.
 export async function fetchStatsForReport(robotId: string, days: number): Promise<StatsBundle> {
-  return delay(getStatistics(robotId, days, 'daily'));
+  return apiFetch<StatsBundle>(`/robots/${robotId}/statistics/?days=${days}&granularity=daily`);
 }
 
 export async function fetchStatistics(
@@ -116,46 +104,50 @@ export async function fetchStatistics(
   days: RangeDays,
   gran: Granularity,
 ): Promise<StatsBundle> {
-  return delay(getStatistics(robotId, days, gran));
+  return apiFetch<StatsBundle>(`/robots/${robotId}/statistics/?days=${days}&granularity=${gran}`);
 }
 
 export async function fetchInfoStats(robotId: string, days: number): Promise<InfoStats | null> {
-  return delay(getInfoStats(robotId, days));
+  return apiFetch<InfoStats | null>(`/robots/${robotId}/info-stats/?days=${days}`);
 }
 
 export type { InfoStats };
 
 // ── Gestion (assignment) ─────────────────────────────────────────────────────
 export async function fetchUsers(): Promise<User[]> {
-  return delay(getUsers());
+  return apiFetch<User[]>('/users/');
 }
 // assign/unassign a robot to an admin, then return the fresh user list
 export async function setAdminAssignment(robotId: string, adminId: string | null): Promise<User[]> {
-  setRobotAdmin(robotId, adminId);
-  return delay(getUsers(), 60);
+  return apiFetch<User[]>(`/robots/${robotId}/assign-admin/`, {
+    method: 'POST',
+    body: JSON.stringify({ adminId }),
+  });
 }
 export async function setClientAssignment(robotId: string, clientId: string): Promise<User[]> {
-  assignRobotToClient(robotId, clientId);
-  return delay(getUsers(), 60);
+  return apiFetch<User[]>(`/robots/${robotId}/assign-client/`, {
+    method: 'POST',
+    body: JSON.stringify({ clientId }),
+  });
 }
-export async function createClientUser(name: string, email: string): Promise<User[]> {
-  createClient(name, email);
-  return delay(getUsers(), 60);
+// Quick-assign flow: password optional (backend falls back to "demo" if omitted).
+export async function createClientUser(name: string, email: string, password?: string): Promise<User[]> {
+  return apiFetch<User[]>('/clients/', { method: 'POST', body: JSON.stringify({ name, email, password }) });
 }
 
-// Creation (superadmin). Mock fns throw on validation errors → these reject,
-// caught by the page. Same shape a FastAPI POST would have.
+// Creation (superadmin). Backend rejects on validation errors (400 + detail) →
+// apiFetch throws, caught by the page.
 export async function createAdmin(name: string, email: string, password: string): Promise<User[]> {
-  return delay(addAdmin(name, email, password), 60);
+  return apiFetch<User[]>('/admins/', { method: 'POST', body: JSON.stringify({ name, email, password }) });
 }
 export async function deleteAdmin(adminId: string): Promise<User[]> {
-  return delay(removeAdmin(adminId), 60);
+  return apiFetch<User[]>(`/admins/${adminId}/`, { method: 'DELETE' });
 }
 export async function deleteClient(clientId: string): Promise<User[]> {
-  return delay(removeClient(clientId), 60);
+  return apiFetch<User[]>(`/clients/${clientId}/`, { method: 'DELETE' });
 }
 export async function createClientAccount(name: string, email: string, password: string): Promise<User[]> {
-  return delay(addClient(name, email, password), 60);
+  return apiFetch<User[]>('/clients/', { method: 'POST', body: JSON.stringify({ name, email, password }) });
 }
 export async function createRobot(input: {
   name: string;
@@ -163,28 +155,36 @@ export async function createRobot(input: {
   state: RobotState;
   commissionedAt: string;
 }): Promise<Robot[]> {
-  return delay(addRobot(input), 60);
+  return apiFetch<Robot[]>('/robots/create/', { method: 'POST', body: JSON.stringify(input) });
 }
 
-// Mock auth: seeded users use `demo`; created users use their stored password.
 export async function fetchLastKnownTrack(robotId: string): Promise<LastKnownTrack | null> {
-  return delay(getLastKnownTrack(robotId), 80);
+  return apiFetch<LastKnownTrack | null>(`/robots/${robotId}/last-known-track/`);
 }
 export type { LastKnownTrack };
 
-// Session restore: re-resolve the persisted user against the live USERS store
-// so a stale localStorage snapshot (e.g. empty assignedRobotIds) never drives
-// routing. Returns null when the user no longer exists → forces re-login.
-export function refreshSessionUser(id: string): User | null {
-  const u = USERS.find((x) => x.id === id);
-  return u ? { ...u, assignedRobotIds: [...u.assignedRobotIds] } : null;
+export async function login(email: string, password: string): Promise<User> {
+  const { access, user } = await apiFetch<{ access: string; user: User }>('/auth/login/', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+  setToken(access);
+  return user;
 }
 
-export async function login(email: string, password: string): Promise<User> {
-  const user = USERS.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-  const ok = password === 'demo' || passwordFor(email) === password;
-  if (!user || !ok) {
-    throw new Error('Identifiants invalides');
-  }
-  return delay(user, 200);
+// ── Paramètres (account security) ────────────────────────────────────────────
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await apiFetch<{ detail: string }>('/auth/change-password/', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+export async function fetchNotificationPref(): Promise<boolean> {
+  return (await apiFetch<{ enabled: boolean }>('/auth/notifications/')).enabled;
+}
+export async function setNotificationPref(enabled: boolean): Promise<boolean> {
+  return (await apiFetch<{ enabled: boolean }>('/auth/notifications/', {
+    method: 'PATCH',
+    body: JSON.stringify({ enabled }),
+  })).enabled;
 }

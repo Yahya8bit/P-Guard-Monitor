@@ -6,15 +6,13 @@
    Tailwind colors (tailwind.config.js) point at these vars, so flipping
    <html data-theme> re-themes the whole app with no class changes. */
 :root[data-theme='dark'] {
-  --bg: #0f1416;
+  --bg: #131d1f; /* brand-dark */
   --surface: #161d1f;
-  --surface-2: #1e2629;
+  --surface-2: #1b2629; /* brand-hover */
   --border: #2a3338;
   --text: #e6ebea;
-  /* POLISH 2: muted lightened #8a9794 -> #a6b1ae (one step brighter) so captions
-     read comfortably on the dark surfaces. */
   --text-muted: #a6b1ae;
-  --accent: #12b3a6; /* brighter teal pops on dark */
+  --accent: #00b0a0; /* brand-teal */
   --accent-press: #00a090;
   --success: #2ecc9a;
   --warning: #e0a030;
@@ -35,13 +33,11 @@
   /* subtle light-gray page bg so the pure-white cards read as distinct surfaces */
   --bg: #e9eded;
   --surface: #ffffff;
-  --surface-2: #eef2f1;
+  --surface-2: #e8eded; /* surface-light */
   --border: #dce3e1;
   --text: #1a2426;
-  /* POLISH 2: light theme muted nudged #5e6e6b -> #6d7d7a (one step lighter);
-     stays ~4.7:1 on white = still AA-readable. */
-  --text-muted: #6d7d7a;
-  --accent: #00a090; /* deeper teal reads better on white */
+  --text-muted: #585858; /* brand-muted */
+  --accent: #00b0a0; /* brand-teal */
   --accent-press: #008575;
   --success: #1fa97f;
   --warning: #c2851c;
@@ -308,6 +304,40 @@
   @keyframes skeleton-sweep {
     100% {
       transform: translateX(100%);
+    }
+  }
+
+  /* Eases the trend chart's content in when the selected KPI card (metric)
+     changes — remounted via `key={metric}` so this replays on every switch. */
+  .fade-in {
+    animation: fade-in 220ms ease-out;
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Page-level route transitions (AppShell) — fades in while easing down
+     from just above its resting position (top -> bottom), longer and
+     gentler than .fade-in's card-swap animation. */
+  .page-fade {
+    animation: page-fade 420ms cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  @keyframes page-fade {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 

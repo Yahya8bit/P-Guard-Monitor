@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { User } from '../types/contract';
-import { login as apiLogin, refreshSessionUser } from '../services/api';
+import { login as apiLogin } from '../services/api';
+import { getToken, setToken } from '../services/http';
 
 const STORAGE_KEY = 'pguard-user';
 
@@ -13,18 +14,16 @@ interface AuthCtx {
 
 const Ctx = createContext<AuthCtx | null>(null);
 
-// Rehydrate the session from localStorage. In the real build this is where a
-// JWT would be read/validated; the shape is identical so the swap is local.
+// Rehydrate the session from localStorage. The JWT + user snapshot are written
+// together on login, so a token with no matching user (or vice versa) is
+// treated as no session — cleared, not trusted.
 function restore(): User | null {
+  if (!getToken()) return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const saved = JSON.parse(raw) as User;
-    if (!saved || typeof saved.id !== 'string' || !saved.id) return null;
-    // Re-resolve against the live user store: assignments may have changed since
-    // the snapshot was written, and a stale empty assignedRobotIds must never
-    // route a client to /robots/undefined.
-    return refreshSessionUser(saved.id);
+    return saved && typeof saved.id === 'string' && saved.id ? saved : null;
   } catch {
     return null;
   }
@@ -34,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(restore);
 
   const login = useCallback(async (email: string, password: string) => {
-    const u = await apiLogin(email, password);
+    const u = await apiLogin(email, password); // sets the JWT as a side effect
     localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
     setUser(u);
     return u;
@@ -42,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
+    setToken(null);
     setUser(null);
   }, []);
 

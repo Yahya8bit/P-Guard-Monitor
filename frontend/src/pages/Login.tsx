@@ -28,7 +28,7 @@ const ROLE_CARDS = [
   },
 ];
 
-export function Login() {
+export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const t = useT();
@@ -106,7 +106,7 @@ export function Login() {
           <ThemeToggle />
         </div>
 
-        <div className="w-full max-w-sm">
+        <div className="surface-card w-full max-w-sm p-6">
           <h1 className="text-2xl font-semibold tracking-tight">{t('login.title')}</h1>
           <p className="mt-1 text-sm text-muted">{t('login.subtitle')}</p>
 
@@ -157,9 +157,9 @@ export function Login() {
                   type="button"
                   disabled={busy}
                   onClick={() => pickRole(r.email)}
-                  className="surface-card flex items-center gap-3 p-3 text-left transition-colors hover:border-accent disabled:opacity-60"
+                  className="flex items-center gap-3 rounded-btn border border-border bg-surface-2 p-3 text-left transition-colors hover:border-accent disabled:opacity-60"
                 >
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-btn bg-surface-2 text-accent">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-btn bg-surface text-accent">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                       <path d={r.icon} strokeLinecap="round" strokeLinejoin="round" />
                     </svg>

@@ -15,9 +15,8 @@ import { StackedRoundsChart } from '../components/stats/StackedRoundsChart';
 import { StatTile } from '../components/stats/StatTile';
 import { fetchInfoStats, fetchPatrolTracks, fetchStatistics } from '../services/api';
 import type { InfoStats } from '../services/api';
-import { NOW } from '../services/mock';
-import type { PatrolTrack, RangeDays, StatsBundle } from '../services/mock';
-import type { Granularity } from '../types/contract';
+import { NOW } from '../services/clock';
+import type { Granularity, PatrolTrack, RangeDays, StatsBundle } from '../types/contract';
 
 const GRAN_KEYS: { key: Granularity; tKey: string }[] = [
   { key: 'daily',   tKey: 'stats.gran.daily' },
@@ -67,7 +66,7 @@ function Segmented<T extends string | number>({
 
 // Statistiques — the depth page. Filter bar drives all sections; summary tiles
 // equal the sums of their underlying series (see mock getStatistics).
-export function Statistiques() {
+export default function Statistiques() {
   type OpTab = 'rondes' | 'amarrages' | 'retours' | 'autonomie';
   const { id = '' } = useParams();
   const t = useT();
@@ -114,19 +113,12 @@ export function Statistiques() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile
-          label={t('stats.tile.duration')}
-          value={formatDuration(s.avgRoundMin)}
-          sub={t('dash.chart.rounds.sub')}
-        />
-        <StatTile label={t('stats.tile.estops')} value={s.emergencyStops} sub="Emergency_pressed" />
-        <StatTile
-          label={t('stats.tile.autonomy')}
-          value={`${s.autonomie}%`}
-          sub=""
-        />
-        <StatTile label={t('stats.tile.distance')} value={`${s.distanceKm} km`} sub="" />
+      {/* keyed by gran+range so switching the filter bar eases the new totals in */}
+      <div key={`${gran}-${range}`} className="fade-in grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile label={t('stats.tile.duration')} value={formatDuration(s.avgRoundMin)} />
+        <StatTile label={t('stats.tile.estops')} value={s.emergencyStops} />
+        <StatTile label={t('stats.tile.autonomy')} value={`${s.autonomie}%`} />
+        <StatTile label={t('stats.tile.distance')} value={`${s.distanceKm} km`} />
       </div>
 
       <div className="flex flex-col gap-3">
@@ -143,12 +135,12 @@ export function Statistiques() {
           />
         </div>
 
+        {/* keyed by opTab so switching the operation tab eases the new panel in */}
+        <div key={opTab} className="fade-in">
         {opTab === 'rondes' && (
           <OperationRow
             donutTitle={t('stats.op.rondes.donut')}
-            donutSubtitle={t('stats.op.rondes.donut.sub')}
             chartTitle={t('stats.op.rondes.chart')}
-            chartSubtitle={t('stats.op.rondes.chart.sub')}
             donut={
               <MissionDonut
                 completed={s.completed}
@@ -167,9 +159,7 @@ export function Statistiques() {
           infoStats ? (
             <OperationRow
               donutTitle={t('stats.op.amarrages.donut')}
-              donutSubtitle={t('stats.op.amarrages.donut.sub')}
               chartTitle={t('stats.op.amarrages.chart')}
-              chartSubtitle={t('stats.op.amarrages.chart.sub')}
               donut={
                 <OutcomeDonut
                   successCount={infoStats.docking.procedures_succeeded}
@@ -178,7 +168,6 @@ export function Statistiques() {
                   successLabel={t('stats.op.amarrages.success')}
                   failLabel={t('stats.op.amarrages.fail')}
                   centerLabel={t('stats.op.amarrages.center')}
-                  note={t('stats.op.amarrages.note', { v: infoStats.docking.attempts_per_procedure_mean.toFixed(1) })}
                 />
               }
               chart={
@@ -210,9 +199,7 @@ export function Statistiques() {
           return (
             <OperationRow
               donutTitle={t('stats.op.autonomie.donut')}
-              donutSubtitle={t('stats.op.autonomie.donut.sub')}
               chartTitle={t('stats.op.autonomie.chart')}
-              chartSubtitle={t('stats.op.autonomie.chart.sub')}
               donut={
                 <div>
                   <div className="relative h-56 w-full">
@@ -250,9 +237,7 @@ export function Statistiques() {
           infoStats ? (
             <OperationRow
               donutTitle={t('stats.op.retours.donut')}
-              donutSubtitle={t('stats.op.retours.donut.sub')}
               chartTitle={t('stats.op.retours.chart')}
-              chartSubtitle={t('stats.op.retours.chart.sub')}
               donut={
                 <OutcomeDonut
                   successCount={infoStats.back_home.home_reached}
@@ -279,29 +264,24 @@ export function Statistiques() {
             </div>
           )
         )}
+        </div>
       </div>
 
       {/* 4 + 5 side by side on wide screens */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <Section
-          title={t('stats.section.emergency')}
-          subtitle={t('stats.section.emergency.sub')}
-        >
+        <Section title={t('stats.section.emergency')}>
           <SimpleBars data={data.emergency} color="var(--danger)" name={t('stats.section.emergency')} />
         </Section>
-        <Section title={t('stats.section.distance')} subtitle={t('stats.section.distance.sub')}>
+        <Section title={t('stats.section.distance')}>
           <SimpleBars data={data.distance} color="var(--accent)" name={t('stats.tile.distance')} unit=" km" />
         </Section>
       </div>
 
-      <Section title={t('stats.section.heatmap')} subtitle={t('stats.section.heatmap.sub')}>
+      <Section title={t('stats.section.heatmap')}>
         <ActivityHeatmap matrix={data.hourly.matrix} max={data.hourly.max} />
       </Section>
 
-      <Section
-        title={t('stats.patrol.title')}
-        subtitle={t('stats.section.patrol.sub')}
-      >
+      <Section title={t('stats.patrol.title')}>
         {tracks.length === 0 ? (
           <MapEmptyState
             message={

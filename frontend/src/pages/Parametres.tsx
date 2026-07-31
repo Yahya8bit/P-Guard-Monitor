@@ -1,16 +1,26 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { useAuth } from '../auth/AuthContext';
-import { Section } from '../components/stats/Section';
+import { changePassword } from '../services/api';
 import { useT } from '../theme/LanguageContext';
-import { useTheme } from '../theme/ThemeContext';
-import { useLang } from '../theme/LanguageContext';
 import type { Role } from '../types/contract';
 
-export function Parametres() {
-  const { theme, toggle } = useTheme();
-  const { lang, setLang } = useLang();
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+// Page-local card shell — deliberately not the shared <Section> component:
+// this page needs no border-radius/shadow/heading-size tuned for its own spec
+// (12px radius, no shadow, 16px heading) without touching every other page
+// that uses <Section>.
+function Card({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+  return (
+    <section className="rounded-[12px] border border-border bg-surface p-6">
+      <h2 className="text-[16px] font-semibold">{title}</h2>
+      {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
+      <div className="mt-5">{children}</div>
+    </section>
+  );
+}
+
+export default function Parametres() {
+  const { user } = useAuth();
   const t = useT();
 
   const ROLE_LABEL: Record<Role, string> = {
@@ -19,108 +29,122 @@ export function Parametres() {
     client:     t('settings.role.client'),
   };
 
-  const PLACEHOLDERS = [
-    { label: t('settings.notif.password'),  desc: t('settings.notif.password.desc') },
-    { label: t('settings.notif.notifs'),    desc: t('settings.notif.notifs.desc') },
-    { label: t('settings.notif.sessions'),  desc: t('settings.notif.sessions.desc') },
-  ];
+  return (
+    <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title.parametres')}</h1>
+        <p className="mt-1 text-sm text-muted">{t('settings.header.subtitle')}</p>
+      </div>
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login', { replace: true });
+      <div className="flex flex-col gap-5">
+        <Card title={t('settings.identity.title')} subtitle={t('settings.identity.subtitle')}>
+          {user && (
+            <dl className="flex flex-col gap-3.5">
+              {([
+                [t('settings.account.name'),   user.name],
+                [t('settings.account.email'),  user.email],
+                [t('settings.account.role'),   ROLE_LABEL[user.role]],
+                [t('settings.account.tenant'), user.id],
+              ] as [string, string][]).map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between text-sm">
+                  <dt className="text-muted">{k}</dt>
+                  <dd className="font-semibold text-text">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </Card>
+
+        <Card title={t('settings.pwd.title')} subtitle={t('settings.pwd.subtitle')}>
+          <PasswordForm />
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+const fieldCls = 'w-[385px] max-w-full rounded-[8px] border border-border bg-surface-2 px-3 text-sm outline-none focus:border-accent';
+const labelCls = 'mb-2 block text-sm font-semibold';
+
+// Always-visible password-change form (own card, not a click-to-expand row).
+function PasswordForm() {
+  const t = useT();
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (next !== confirm) {
+      setError(t('settings.pwd.mismatch'));
+      return;
+    }
+    setBusy(true);
+    try {
+      await changePassword(current, next);
+      setCurrent('');
+      setNext('');
+      setConfirm('');
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 4000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('mgmt.form.error'));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <Section title={t('settings.appearance.title')} subtitle={t('settings.appearance.subtitle')}>
-        <div className="flex items-center justify-between gap-4 py-2">
-          <div>
-            <div className="text-sm font-medium">{t('settings.theme.label')}</div>
-            <div className="text-xs text-muted">{t('settings.theme.desc')}</div>
-          </div>
-          <div className="flex gap-1 rounded-btn border border-border p-0.5">
-            <button
-              onClick={() => theme !== 'light' && toggle()}
-              className={[
-                'rounded-[6px] px-3 py-1.5 text-sm transition-colors',
-                theme === 'light' ? 'bg-accent font-medium text-[#04201d]' : 'text-muted hover:text-text',
-              ].join(' ')}
-            >
-              {t('settings.theme.light')}
-            </button>
-            <button
-              onClick={() => theme !== 'dark' && toggle()}
-              className={[
-                'rounded-[6px] px-3 py-1.5 text-sm transition-colors',
-                theme === 'dark' ? 'bg-accent font-medium text-[#04201d]' : 'text-muted hover:text-text',
-              ].join(' ')}
-            >
-              {t('settings.theme.dark')}
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-4 border-t border-border py-2 pt-3">
-          <div>
-            <div className="text-sm font-medium">{t('settings.lang.label')}</div>
-            <div className="text-xs text-muted">{t('settings.lang.desc')}</div>
-          </div>
-          <div className="flex gap-1 rounded-btn border border-border p-0.5">
-            {([['fr', 'Français'], ['en', 'English']] as const).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setLang(key)}
-                className={[
-                  'rounded-[6px] px-3 py-1.5 text-sm transition-colors',
-                  lang === key ? 'bg-accent font-medium text-[#04201d]' : 'text-muted hover:text-text',
-                ].join(' ')}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </Section>
-
-      <Section title={t('settings.account.title')} subtitle={t('settings.account.subtitle')}>
-        {user && (
-          <dl className="divide-y divide-border">
-            {([
-              [t('settings.account.name'),  user.name],
-              [t('settings.account.email'), user.email],
-              [t('settings.account.role'),  ROLE_LABEL[user.role]],
-            ] as [string, string][]).map(([k, v]) => (
-              <div key={k} className="flex items-center justify-between py-2.5 text-sm">
-                <dt className="text-muted">{k}</dt>
-                <dd className="font-medium">{v}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="mt-4 rounded-btn border border-border px-4 py-2 text-sm text-muted transition-colors hover:border-danger hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger"
-        >
-          {t('settings.account.logout')}
-        </button>
-      </Section>
-
-      <Section title={t('settings.notif.title')} subtitle={t('settings.notif.subtitle')}>
-        <ul className="divide-y divide-border">
-          {PLACEHOLDERS.map((p) => (
-            <li key={p.label} className="flex items-center justify-between gap-4 py-3 opacity-60">
-              <div>
-                <div className="text-sm font-medium">{p.label}</div>
-                <div className="text-xs text-muted">{p.desc}</div>
-              </div>
-              <span className="shrink-0 rounded-full border border-border px-2.5 py-1 text-[11px] text-muted">
-                {t('settings.notif.coming')}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </Section>
-    </div>
+    <form onSubmit={submit} className="flex flex-col gap-5">
+      <div>
+        <label className={labelCls} htmlFor="pwd-current">{t('settings.pwd.current')}</label>
+        <input
+          id="pwd-current"
+          type="password"
+          required
+          autoComplete="current-password"
+          value={current}
+          onChange={(e) => setCurrent(e.target.value)}
+          className={`${fieldCls} h-[38px]`}
+        />
+      </div>
+      <div>
+        <label className={labelCls} htmlFor="pwd-new">{t('settings.pwd.new')}</label>
+        <input
+          id="pwd-new"
+          type="password"
+          required
+          autoComplete="new-password"
+          value={next}
+          onChange={(e) => setNext(e.target.value)}
+          className={`${fieldCls} h-[38px]`}
+        />
+      </div>
+      <div>
+        <label className={labelCls} htmlFor="pwd-confirm">{t('settings.pwd.confirm')}</label>
+        <input
+          id="pwd-confirm"
+          type="password"
+          required
+          autoComplete="new-password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          className={`${fieldCls} h-[38px]`}
+        />
+      </div>
+      {error && <p className="text-xs text-danger">{error}</p>}
+      {success && <p className="text-xs text-success">{t('settings.pwd.success')}</p>}
+      <button
+        type="submit"
+        disabled={busy}
+        className="btn-accent h-[38px] w-fit rounded-[8px] px-4 text-sm disabled:opacity-50"
+      >
+        {t('settings.pwd.save')}
+      </button>
+    </form>
   );
 }

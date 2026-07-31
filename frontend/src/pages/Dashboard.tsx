@@ -9,20 +9,14 @@ import { TrendChart } from '../components/dashboard/TrendChart';
 import { AlertsStrip } from '../components/dashboard/AlertsStrip';
 import { LastPositionMap } from '../components/dashboard/LastPositionMap';
 import {
-  fetchBatterySamples,
   fetchDashboard,
-  fetchIncidentBreakdown,
-  fetchInfoStats,
   fetchLastKnownTrack,
   fetchMetricTrend,
   fetchRecentAlerts,
   getRobot,
 } from '../services/api';
-import type { InfoStats, LastKnownTrack } from '../services/api';
-import type { TrendMetric } from '../services/mock';
-import type { Alert, BatterySample, DashboardSummary, Period, Robot, TrendSeries } from '../types/contract';
-
-type Breakdown = { obstacles: number; emergencyStops: number; total: number };
+import type { LastKnownTrack } from '../services/api';
+import type { Alert, DashboardSummary, Period, Robot, TrendMetric, TrendSeries } from '../types/contract';
 
 // ── KPI alert-state system (one generic mechanism) ───────────────────────────
 // SINGLE SOURCE OF TRUTH: per-KPI { sentiment, alertAt, warnAt? }. ONLY KPIs with
@@ -65,7 +59,7 @@ const METRIC_COLORS: Record<TrendMetric, string> = {
 // The one fully-built page. Status hero + four KPI cards + one period-switchable
 // trend chart, all wired to the mock service. Everything re-fetches when the
 // robot id or the selected period changes.
-export function Dashboard() {
+export default function Dashboard() {
   const { id = '' } = useParams();
   const t = useT();
   const [period, setPeriod] = useState<Period>('30d');
@@ -75,9 +69,6 @@ export function Dashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [trend, setTrend] = useState<TrendSeries | null>(null);
 
-  const [infoStats, setInfoStats] = useState<InfoStats | null>(null);
-  const [battery, setBattery] = useState<BatterySample[]>([]);
-  const [breakdown, setBreakdown] = useState<Breakdown | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [lastTrack, setLastTrack] = useState<LastKnownTrack | null | undefined>(undefined);
   // network failure on the data the page can't render without; retryKey re-runs
@@ -94,7 +85,6 @@ export function Dashboard() {
       .catch(() => setLoadError(true));
     // secondary data: a failure degrades to the empty/absent state, never blocks
     fetchRecentAlerts(id, 5).then(setAlerts).catch(() => setAlerts([]));
-    fetchInfoStats(id, 30).then(setInfoStats).catch(() => setInfoStats(null));
     fetchLastKnownTrack(id).then(setLastTrack).catch(() => setLastTrack(null));
   }, [id, retryKey]);
 
@@ -112,16 +102,10 @@ export function Dashboard() {
 
   useEffect(() => {
     let live = true;
-    Promise.all([
-      fetchDashboard(id, period),
-      fetchBatterySamples(id, period),
-      fetchIncidentBreakdown(id, period),
-    ])
-      .then(([s, b, br]) => {
+    fetchDashboard(id, period)
+      .then((s) => {
         if (!live) return;
         setSummary(s);
-        setBattery(b);
-        setBreakdown(br);
       })
       .catch(() => live && setLoadError(true));
     return () => {
@@ -155,21 +139,12 @@ export function Dashboard() {
       />
     );
   }
-  if (!robot || !summary || !trend || !breakdown) {
+  if (!robot || !summary || !trend) {
     return <DashboardSkeleton />;
   }
 
   const k = summary.kpis;
-
-  // Secondary-line values, all derived from the same mock data as the cards:
   const periodDays = period === '7d' ? 7 : 30;
-  // daily average rounds = period total / days (French decimal comma)
-  const roundsPerDay = (k.rounds.value / periodDays).toFixed(1).replace('.', ',');
-  // mean battery % across this period's dock-phase samples (event-sampled)
-  const dockSamples = battery.filter((s) => s.phase === 'dock');
-  const dockBatteryAvg = dockSamples.length
-    ? Math.round(dockSamples.reduce((a, s) => a + s.pct, 0) / dockSamples.length)
-    : null;
 
   // alert-capable tiles resolve their fill from the threshold config; neutral
   // tiles (Rondes, Cycles, Disponibilité) pass a fixed calm fill below.
@@ -199,9 +174,7 @@ export function Dashboard() {
           value={k.rounds.value}
           deltaPct={k.rounds.deltaPct}
           sentiment="higher-better"
-          subtext={t('dash.kpi.rounds.sub', { v: k.rounds.value, r: roundsPerDay })}
           icon="M3 7l9-4 9 4-9 4zM3 7v10l9 4 9-4V7"
-          hint={t('dash.chart.rounds.sub')}
           selected={metric === 'rounds'}
           onSelect={() => setMetric('rounds')}
         />
@@ -210,10 +183,7 @@ export function Dashboard() {
           value={k.incidents.value}
           deltaPct={k.incidents.deltaPct}
           sentiment="higher-worse"
-          subtext={t('dash.kpi.incidents.sub', { o: breakdown.obstacles, e: breakdown.emergencyStops })}
-          note={t('dash.kpi.incidents.note')}
           icon="M12 3l9 16H3zM12 10v4M12 17h.01"
-          hint={t('dash.chart.incidents.sub')}
           tone="danger"
           fill={incidentsFill}
           selected={metric === 'incidents'}
@@ -224,35 +194,18 @@ export function Dashboard() {
           value={k.chargeCycles.value}
           deltaPct={k.chargeCycles.deltaPct}
           sentiment="neutral"
-          subtext={
-            infoStats
-              ? t('dash.kpi.charges.sub.info', { v: infoStats.docking.battery_at_dock_median })
-              : dockBatteryAvg !== null
-                ? t('dash.kpi.charges.sub.avg', { v: dockBatteryAvg })
-                : undefined
-          }
           icon="M13 2L4 14h6l-1 8 9-12h-6z"
-          hint={t('dash.chart.charges.sub')}
           selected={metric === 'charges'}
           onSelect={() => setMetric('charges')}
         />
         <KpiCard
           label={t('dash.kpi.availability')}
           value={`${k.availability.value}%`}
-          subtext={t('dash.kpi.availability.sub')}
           icon="M12 8v4l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          hint={t('dash.chart.availability.sub')}
           selected={metric === 'disponibilite'}
           onSelect={() => setMetric('disponibilite')}
         />
       </div>
-
-      {/* discoverability + power-user hint: cards drive the chart; 1–4 do the same */}
-      <p className="-mt-2 text-xs text-muted">
-        {t('dash.hint.keys')}{' '}
-        <kbd className="rounded border border-border px-1 font-sans text-[11px]">1</kbd>–
-        <kbd className="rounded border border-border px-1 font-sans text-[11px]">4</kbd>.
-      </p>
 
       {/* balanced two-column rhythm (reference pairs two bottom panels): trend
           chart | alerts side by side on wide screens, stacked on narrow. */}
@@ -262,7 +215,6 @@ export function Dashboard() {
           period={period}
           onPeriod={setPeriod}
           title={t(`dash.chart.${metric}` as Parameters<typeof t>[0])}
-          subtitle={t(`dash.chart.${metric}.sub` as Parameters<typeof t>[0])}
           color={METRIC_COLORS[metric]}
           percent={metric === 'disponibilite'}
         />
@@ -274,11 +226,6 @@ export function Dashboard() {
       <section className="surface-card flex flex-col p-card">
         <div className="mb-3">
           <h3 className="text-[18px] font-medium">{t('dash.map.title')}</h3>
-          <p className="text-[13px] text-muted">
-            {lastTrack
-              ? `${t('dash.map.subtitle')} — ${lastTrack.date.split('-').reverse().join('/')}`
-              : t('dash.map.subtitle')}
-          </p>
         </div>
         {lastTrack === undefined ? (
           <div className="flex h-[300px] items-center justify-center">

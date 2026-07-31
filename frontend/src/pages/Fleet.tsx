@@ -53,7 +53,7 @@ type StatusFilter = 'all' | RobotState;
 
 // Fleet overview (superadmin/admin only — clients are redirected to their robot).
 // Cards are filtered by assignment in the component, not just hidden by CSS.
-export function Fleet() {
+export default function Fleet() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const t = useT();
@@ -221,10 +221,6 @@ export function Fleet() {
                     const meta = STATE_META[r.state];
                     const lvl = attentionLevel(r.state, r.battery);
                     const st = LEVEL_STYLE[lvl];
-                    const levelLabel = lvl === 'critical'
-                      ? (r.state === 'maintenance' ? t('fleet.level.maintenance') : t('fleet.level.critical'))
-                      : t('fleet.level.watch');
-                    const regionLabel = r.region === 'tunisia' ? t('fleet.region.tunisia') : t('fleet.region.germany');
                     const stateLabel = t(`fleet.state.${r.state}` as Parameters<typeof t>[0]);
                     return (
                       <button
@@ -233,25 +229,8 @@ export function Fleet() {
                         className={`surface-card group p-4 text-left transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${st.ring}`}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="text-xs font-medium uppercase tracking-wider text-muted">{r.id}</div>
-                            <div className="mt-0.5 text-lg font-semibold tracking-tight">{r.name}</div>
-                          </div>
+                          <div className="text-lg font-semibold tracking-tight">{r.name}</div>
                           <span className={`shrink-0 text-xs font-medium ${meta.color}`}>● {stateLabel}</span>
-                        </div>
-
-                        {/* attention badge — text label, never color alone (a11y) */}
-                        {lvl !== 'ok' && (
-                          <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium ${st.pill}`}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M12 3l9 16H3zM12 10v4M12 17h.01" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                            {levelLabel}
-                          </div>
-                        )}
-
-                        <div className="mt-2 text-sm text-muted">
-                          {r.site} · {regionLabel}
                         </div>
 
                         <div className="mt-3">
@@ -263,13 +242,6 @@ export function Fleet() {
                             <div className={`h-full rounded-full ${st.bar}`} style={{ width: `${r.battery}%` }} />
                           </div>
                         </div>
-
-                        {r.currentMission && (
-                          <div className="mt-3 truncate text-sm">
-                            <span className="text-muted">{t('fleet.card.mission')}&nbsp;</span>
-                            {r.currentMission}
-                          </div>
-                        )}
                       </button>
                     );
                   })}

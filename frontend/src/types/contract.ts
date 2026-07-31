@@ -103,3 +103,79 @@ export interface ReportMeta {
   generatedAt: string;
   sizeKb: number;
 }
+
+export type TrendMetric = 'rounds' | 'incidents' | 'charges' | 'disponibilite';
+
+export type AlertStatus = 'open' | 'resolved' | 'unresolved';
+export interface AlertResolution {
+  status: 'resolved' | 'unresolved';
+  note: string;
+  resolvedBy: string;
+  resolvedAt: string;
+}
+
+export type Deployment = 'tunisia' | 'germany';
+export interface PatrolTrack {
+  date: string;
+  mission: string;
+  deployment: Deployment;
+  points: [number, number][];
+}
+
+export type RangeDays = 7 | 30 | 90;
+
+export interface StatsBundle {
+  summary: {
+    missionRate: number; // %
+    completed: number;
+    total: number;
+    emergencyStops: number;
+    dockingRate: number; // %
+    dockingSucc: number;
+    dockingTotal: number;
+    distanceKm: number;
+    avgRoundMin: number; // avg completed-round duration (minutes)
+    disponibilite: number; // % — real (kpi_seed overall)
+    autonomie: number; // % — real (kpi_seed overall)
+  };
+  roundsSuccess: { label: string; completed: number; interrupted: number }[];
+  emergency: { label: string; value: number }[];
+  distance: { label: string; value: number }[];
+  dispoTrend: { label: string; value: number }[]; // daily Disponibilité (real values)
+  autonomieTrend: { label: string; value: number }[]; // daily Taux d'autonomie (real values)
+  hourly: { matrix: number[][]; max: number };
+}
+
+export interface InfoStats {
+  docking: {
+    procedures_total: number;
+    procedures_succeeded: number;
+    procedures_failed: number;
+    success_rate: number;
+    attempts_per_procedure_mean: number;
+    battery_at_dock_median: number;
+    daily: { label: string; succeeded: number; failed: number }[];
+  };
+  obstacles: {
+    events_total: number;
+    delay_s_mean: number;
+  };
+  obstaclesPeriod: {
+    events_total: number;
+    delay_s_mean: number;
+  };
+  back_home: {
+    returns_total: number;
+    home_reached: number;
+    not_reached: number;
+    success_rate: number;
+    daily: { label: string; reached: number; not_reached: number }[];
+  };
+}
+
+export interface LastKnownTrack {
+  date: string; // ISO YYYY-MM-DD
+  mission: string;
+  points: [number, number][];
+  lastPoint: [number, number];
+}

@@ -11,15 +11,14 @@ interface Props {
   period: Period;
   onPeriod: (p: Period) => void;
   title: string;
-  subtitle: string;
   color: string; // bar color for the selected metric (CSS var or hex)
   percent?: boolean; // % metric (Disponibilité): fixed 0–100 axis + % tooltip
 }
 
-// Daily trend as bars, period-switchable (7d / 30d). Title, subtitle and bar
-// color are driven by the selected KPI card. `percent` switches to a 0–100 axis
-// for the Disponibilité metric (a rate, not a count).
-export function TrendChart({ series, period, onPeriod, title, subtitle, color, percent }: Props) {
+// Daily trend as bars, period-switchable (7d / 30d). Title and bar color are
+// driven by the selected KPI card. `percent` switches to a 0–100 axis for the
+// Disponibilité metric (a rate, not a count).
+export function TrendChart({ series, period, onPeriod, title, color, percent }: Props) {
   const data = series.points.map((p) => ({ ...p, label: p.t.slice(5) }));
 
   // count metrics: y-axis max = data max + 1, integer ticks. percent metric:
@@ -31,12 +30,11 @@ export function TrendChart({ series, period, onPeriod, title, subtitle, color, p
   return (
     // COMPACT: chart sizes to its content (no flex-1 grow) — a 0–3 count range
     // doesn't need a tall plot. Fixed short plot height below.
-    <section className="surface-card flex flex-col p-card">
+    <section className="surface-card flex min-w-0 flex-col p-card">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          {/* title/subtitle reflect the selected KPI (CHANGE A) */}
+          {/* title reflects the selected KPI */}
           <h3 className="text-[18px] font-medium">{title}</h3>
-          <p className="text-[13px] text-muted">{subtitle}</p>
         </div>
         <div className="flex gap-1 rounded-btn border border-border p-0.5">
           {PERIODS.map((p) => (
@@ -54,8 +52,10 @@ export function TrendChart({ series, period, onPeriod, title, subtitle, color, p
         </div>
       </div>
 
-      {/* COMPACT: short fixed plot height — bars stay readable, no empty space */}
-      <div className="h-48 w-full">
+      {/* COMPACT: short fixed plot height — bars stay readable, no empty space.
+          Keyed by metric + period so switching KPI cards OR the 7d/30d toggle
+          both ease the new chart in. */}
+      <div key={`${series.metric}-${period}`} className="fade-in h-48 w-full overflow-hidden">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 6, right: 6, bottom: 0, left: -20 }}>
             <CartesianGrid stroke="var(--border)" strokeDasharray="2 4" vertical={false} />

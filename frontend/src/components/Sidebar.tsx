@@ -1,16 +1,15 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import { Bot, ChartNoAxesColumnDecreasing, FileText, LogOut, Settings, TriangleAlert, User as UserIcon, House } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { useT } from '../theme/LanguageContext';
 import { LogoBadge } from './LogoBadge';
 
 const SECTION_KEYS = [
-  { key: 'dashboard',    tKey: 'nav.dashboard',    icon: 'M3 13h8V3H3zM13 21h8V11h-8zM13 3v6h8V3zM3 21h8v-6H3z' },
-  { key: 'statistiques', tKey: 'nav.statistiques', icon: 'M4 20V10M10 20V4M16 20v-8M22 20H2' },
-  { key: 'alertes',      tKey: 'nav.alertes',      icon: 'M12 3l9 16H3zM12 10v4M12 17h.01' },
-  { key: 'rapports',     tKey: 'nav.rapports',     icon: 'M7 3h7l5 5v13H7zM14 3v5h5M9 13h8M9 17h8' },
+  { key: 'dashboard',    tKey: 'nav.dashboard',    icon: House },
+  { key: 'statistiques', tKey: 'nav.statistiques', icon: ChartNoAxesColumnDecreasing },
+  { key: 'alertes',      tKey: 'nav.alertes',      icon: TriangleAlert },
+  { key: 'rapports',     tKey: 'nav.rapports',     icon: FileText },
 ] as const;
-
-const PARAMETRES_ICON = 'M12 9a3 3 0 100 6 3 3 0 000-6zM19 12l2 1-2 4-2-1M5 12l-2 1 2 4 2-1';
 
 interface Props {
   activeRobotId: string;
@@ -21,88 +20,92 @@ export function Sidebar({ activeRobotId, onNavigate }: Props) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const t = useT();
-  const showGestion = user?.role === 'superadmin' || user?.role === 'admin';
-  const showFleet = showGestion;
+  const showFleet = user?.role === 'superadmin' || user?.role === 'admin';
 
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
   };
 
+  // active = fully filled accent rectangle, dark text/icon on it
   const linkCls = ({ isActive }: { isActive: boolean }) =>
     [
-      'flex items-center gap-3 rounded-btn px-3 py-3 text-base transition-colors',
-      isActive
-        ? 'bg-surface-2 text-accent font-medium ring-1 ring-inset ring-border'
-        : 'text-muted hover:text-text hover:bg-surface-2',
+      'ml-5 mb-1 flex h-11 w-[85%] items-center gap-3 rounded-[10px] px-3 text-[15px] font-medium transition-colors',
+      isActive ? 'bg-accent text-[#04201d]' : 'text-text/80 hover:text-text hover:bg-surface-2',
     ].join(' ');
+
+  const sectionLabelCls = 'ml-5 mb-1 mt-6 text-[10px] font-medium uppercase tracking-wider text-muted';
 
   return (
     <nav className="flex h-full flex-col p-4" aria-label="Navigation principale">
-      <div className="mb-8 flex items-center gap-3 px-3 pb-3 pt-4">
-        <LogoBadge sizeClass="h-12 w-12" mode="auto" />
-        <span className="text-[20px] font-semibold tracking-tight">
+      {/* logo in a bordered card */}
+      <div className="mb-3 flex items-center gap-3 rounded-[10px] border border-border bg-surface-2/50 p-3">
+        <LogoBadge sizeClass="h-11 w-11" mode="auto" />
+        <span className="text-lg font-semibold leading-tight tracking-tight">
           P-Guard <span className="text-accent">Monitor</span>
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 overflow-y-auto">
+      {/* brand row: status dot + P-GUARD, MONITOR pill */}
+      <div className="mb-4 flex items-center justify-between px-1">
+        <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+          <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+          P-Guard
+        </span>
+        <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">
+          Monitor
+        </span>
+      </div>
+
+      <div className="flex flex-1 flex-col overflow-y-auto">
         {showFleet && (
           <NavLink to="/fleet" className={linkCls} onClick={onNavigate} end>
-            <Icon d="M3 7l9-4 9 4-9 4zM3 7v10l9 4 9-4V7" />
+            <Bot size={18} />
             {t('nav.fleet')}
           </NavLink>
         )}
 
-        <div className="px-3 pb-1 pt-3 text-[11px] uppercase tracking-wider text-muted">
+        <div className={sectionLabelCls}>
           {t('nav.robot')} {activeRobotId}
         </div>
         {SECTION_KEYS.map((s) => (
           <NavLink key={s.key} to={`/robots/${activeRobotId}/${s.key}`} className={linkCls} onClick={onNavigate}>
-            <Icon d={s.icon} />
+            <s.icon size={18} />
             {t(s.tKey)}
           </NavLink>
         ))}
 
-        <div className="px-3 pb-1 pt-3 text-[11px] uppercase tracking-wider text-muted">
+        <div className={sectionLabelCls}>
           {t('nav.administration')}
         </div>
-        {showGestion && (
+        {showFleet && (
           <NavLink to="/gestion" className={linkCls} onClick={onNavigate}>
-            <Icon d="M16 21v-2a4 4 0 00-8 0v2M12 11a4 4 0 100-8 4 4 0 000 8z" />
+            <UserIcon size={18} />
             {t('nav.gestion')}
           </NavLink>
         )}
         <NavLink to="/parametres" className={linkCls} onClick={onNavigate}>
-          <Icon d={PARAMETRES_ICON} />
+          <Settings size={18} />
           {t('nav.parametres')}
         </NavLink>
       </div>
 
       {user && (
-        <div className="mt-4 border-t border-border pt-4">
-          <div className="px-2 pb-3">
+        <div className="mt-3">
+          <div className="px-3 pb-2">
             <div className="text-sm font-medium leading-tight">{user.name}</div>
             <div className="text-[11px] uppercase tracking-wide text-muted">{user.role}</div>
           </div>
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-btn px-3 py-3 text-base text-muted transition-colors hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger"
+            className="ml-5 flex h-11 w-[85%] items-center gap-3 rounded-[10px] px-3 text-[15px] font-medium text-text/80 transition-colors hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-danger"
           >
-            <Icon d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+            <LogOut size={18} />
             {t('topbar.logout')}
           </button>
         </div>
       )}
     </nav>
-  );
-}
-
-function Icon({ d }: { d: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d={d} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }

@@ -4,7 +4,7 @@ import L from 'leaflet';
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip } from 'react-leaflet';
 import { useTheme } from '../../theme/ThemeContext';
 import { useT } from '../../theme/LanguageContext';
-import type { PatrolTrack } from '../../services/mock';
+import type { PatrolTrack } from '../../types/contract';
 
 export function PatrolMap({ tracks }: { tracks: PatrolTrack[] }) {
   const { theme } = useTheme();

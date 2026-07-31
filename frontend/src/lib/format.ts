@@ -1,5 +1,4 @@
-import type { AlertSeverity, AlertType, Region, RobotState } from '../types/contract';
-import type { AlertStatus } from '../services/mock';
+import type { AlertSeverity, AlertStatus, AlertType, Region, RobotState } from '../types/contract';
 
 // State → French label + the semantic token class to tint it (CLAUDE.md:
 // running→success, charging→accent, docked→muted, maintenance→warning,

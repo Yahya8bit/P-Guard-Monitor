@@ -1,19 +1,35 @@
 # P-Guard Monitor
 
 Supervision console for Enova Robotics' P-Guard autonomous security robots.
-React 18 + TypeScript SPA (Vite) — real-time fleet overview, per-robot
-dashboards, statistics, alerts, and PDF/CSV reports, all derived from ~2 years
-of real patrol logs from a single P-Guard unit.
+real-time fleet overview, per-robot dashboards, statistics, alerts, and
+PDF/CSV reports, derived from ~2 years of real robots logs.
 
-Frontend-first: a deterministic mock service layer serves committed,
-log-derived JSON behind a frozen data contract, so a real REST/JWT backend can
-swap in later with zero UI change.
+## Stack
+
+**Frontend:** React 18 · TypeScript · Vite · Tailwind CSS · Recharts ·
+react-leaflet · react-router · jsPDF
+
+**Backend:** Django 6 · Django REST Framework · Simple JWT · PostgreSQL ·
+django-cors-headers
 
 ## Quick start
 
+Backend (Django, Postgres):
+
+```bash
+cd backend
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py seed_data     # loads demo users, robots, log-derived data
+python manage.py runserver     # http://localhost:8000
+```
+
+Frontend:
+
 ```bash
 npm install
-npm run dev        # Vite dev server with HMR
+npm run dev                    # Vite dev server, http://localhost:3000
 ```
 
 Demo accounts (password `demo` for all):
@@ -28,37 +44,75 @@ Demo accounts (password `demo` for all):
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | dev server (HMR) |
+| `npm run dev` | frontend dev server (HMR) |
 | `npm run build` | typecheck (`tsc --noEmit`) + production build |
 | `npm run lint` | ESLint |
 | `npm run preview` | serve the production build |
+| `python manage.py runserver` | backend dev server |
+| `python manage.py test` | backend test suite |
 
 ## Architecture
 
 ```
-src/
-├── types/contract.ts   # frozen data contract — every shape crossing the service boundary
+backend/
+├── myproject/            # Django project: settings, root urls
+└── pguard/                # Django app
+    ├── models.py          # Robot, User, Alert, PatrolTrack, ...
+    ├── views.py            # auth, dashboard, trend, battery, alerts, reports
+    ├── gestion.py          # user/robot assignment endpoints (superadmin/admin)
+    ├── stats.py            # KPI/statistics derivations
+    ├── serializers.py
+    └── management/commands/seed_data.py   # loads log-derived seed data
+
+frontend/src/
+├── types/contract.ts    # frozen data contract — every shape crossing the API boundary
 ├── services/
-│   ├── api.ts          # the only module pages import; swap bodies for fetch later
-│   ├── mock.ts         # deterministic data + KPI derivations (clock frozen at 2026-06-01)
-│   ├── random.ts       # seeded PRNG (mulberry32) — no Math.random, reloads reproduce
-│   └── data/*.json     # log-derived seeds (KPIs, GPS tracks)
-├── auth/               # mock auth context (localStorage) + route guards
-├── components/         # AppShell, Sidebar, TopBar, dashboard/, stats/
-├── pages/              # Login, Fleet, Dashboard, Statistiques, Alertes, Rapports, Gestion, Paramètres
-├── lib/report.ts       # jsPDF/CSV report generation (same stats source as the pages)
-└── theme/              # dark-default theme + language contexts
+│   ├── api.ts            # the only module pages import
+│   ├── http.ts            # fetch wrapper: JWT auth header, error handling
+│   └── clock.ts
+├── auth/                 # auth context (JWT in localStorage) + route guards
+├── components/           # AppShell, Sidebar, TopBar, dashboard/, stats/
+├── pages/                 # Login, Fleet, Dashboard, Statistiques, Alertes, Rapports, Gestion, Paramètres
+├── lib/report.ts         # jsPDF/CSV report generation
+└── theme/                 # dark-default theme + language contexts
 ```
 
-Key rules:
+## API endpoints
 
-- **Frozen contract** — `src/types/contract.ts` is the single source of truth;
-  the mock returns exactly these shapes.
-- **Deterministic data** — clock pinned to `NOW = 2026-06-01`, seeded PRNG,
-  no wall clock, no `Math.random`. `PG-001` is the one real unit; others are
-  seeded fiction.
-- **Access enforced twice** — role/robot access lives in both route guards
-  (`src/auth/guards.tsx`) and components, never CSS-hidden.
+All routes are under `/api/`, JWT-authenticated (`Authorization: Bearer <token>`) unless noted.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/auth/login/` | obtain access/refresh token |
+| POST | `/auth/refresh/` | refresh access token |
+| GET | `/auth/me/` | current user profile |
+| POST | `/auth/change-password/` | change password |
+| GET/PUT | `/auth/notifications/` | notification preferences |
+| GET | `/robots/` | list robots visible to the user |
+| POST | `/robots/create/` | create robot (superadmin/admin) |
+| GET | `/robots/<robot_id>/` | robot detail |
+| GET | `/robots/<robot_id>/dashboard/` | dashboard summary (`?period=`) |
+| GET | `/robots/<robot_id>/trend/` | metric trend series |
+| GET | `/robots/<robot_id>/battery/` | battery samples |
+| GET | `/robots/<robot_id>/incidents-breakdown/` | incident breakdown |
+| GET | `/robots/<robot_id>/info-stats/` | info stats |
+| GET | `/robots/<robot_id>/last-known-track/` | last known GPS track |
+| GET | `/robots/<robot_id>/statistics/` | statistics bundle |
+| GET | `/patrol-tracks/` | patrol tracks |
+| GET | `/robots/<robot_id>/alerts/` | alerts for a robot |
+| GET | `/alerts/resolutions/` | alert resolutions |
+| POST | `/alerts/<alert_id>/resolve/` | resolve an alert |
+| POST | `/alerts/<alert_id>/reopen/` | reopen an alert |
+| GET | `/robots/<robot_id>/reports/` | report history |
+| GET | `/users/` | list users (superadmin/admin) |
+| POST | `/admins/` | create admin (superadmin) |
+| DELETE | `/admins/<user_id>/` | delete admin (superadmin) |
+| POST | `/clients/` | create client (admin) |
+| DELETE | `/clients/<user_id>/` | delete client (admin) |
+| POST | `/robots/<robot_id>/assign-admin/` | assign robot to admin (superadmin) |
+| POST | `/robots/<robot_id>/assign-client/` | assign robot to client (admin) |
+
+Full route definitions: `backend/pguard/urls.py`.
 
 ## Roles & routing
 
@@ -72,8 +126,4 @@ KPIs (rounds, incidents, charge cycles, availability) and the patrol map are
 derived from real P-Guard logs spanning Jun 2024 → Jun 2026, covering a
 mid-life redeployment from Sousse/Monastir (TN) to Bietigheim (DE). Battery is
 event-sampled at dock/undock — rendered stepped/scattered, never as a smooth
-line. See `CLAUDE.md` for the full data-quality rules and KPI derivations.
-
-## Stack
-
-React 18 · TypeScript · Vite · Tailwind CSS · Recharts · react-leaflet · react-router · jsPDF
+line. 

@@ -58,12 +58,12 @@ export function KpiCard({ label, value, icon, note, hint, deltaPct, sentiment = 
       data-fill={fill}
       className={[
         // dashboard KPI cards: 24px internal padding (p-6) for airier breathing
-        'surface-card p-6',
+        'surface-card p-6 transition-all duration-200 ease-out',
         // EMPHASIS: danger-tinted fill when in alert state. Only swaps bg +
         // border-color (same 1px border), so the box size never changes.
         emphasized ? 'kpi-alert' : '',
         selectable
-          ? 'cursor-pointer transition-shadow hover:ring-1 hover:ring-inset hover:ring-accent/50 active:ring-2 active:ring-inset active:ring-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent'
+          ? 'cursor-pointer hover:ring-1 hover:ring-inset hover:ring-accent/50 active:ring-2 active:ring-inset active:ring-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent'
           : '',
         // persistent selected state — the metric currently in the chart
         selected ? 'ring-1 ring-inset ring-accent' : '',

@@ -2,14 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { landingPath, RequireAuth, RequireRobotAccess, RequireRole } from './auth/guards';
 import { AppShell } from './components/AppShell';
-import { Dashboard } from './pages/Dashboard';
-import { Fleet } from './pages/Fleet';
-import { Login } from './pages/Login';
-import { Alertes } from './pages/Alertes';
-import { Gestion } from './pages/Gestion';
-import { Parametres } from './pages/Parametres';
-import { Rapports } from './pages/Rapports';
-import { Statistiques } from './pages/Statistiques';
+import { Dashboard, Fleet, Login, Alertes, Gestion, Parametres, Rapports, Statistiques } from './pages/index';
+
 
 // Send "/" to the right place: the user's landing page if logged in, else login.
 function RootRedirect() {

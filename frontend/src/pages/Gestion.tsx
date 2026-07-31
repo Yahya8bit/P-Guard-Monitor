@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { RefreshCw, Users, UserPlus } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { Section } from '../components/stats/Section';
 import { useT } from '../theme/LanguageContext';
@@ -23,19 +24,33 @@ const adminIdOf = (users: User[], rid: string) =>
 const clientOf = (users: User[], rid: string) =>
   users.find((u) => u.role === 'client' && u.assignedRobotIds.includes(rid)) ?? null;
 
-export function Gestion() {
+export default function Gestion() {
   const { user } = useAuth();
+  const t = useT();
   const [users, setUsers] = useState<User[]>([]);
   const [robots, setRobots] = useState<Robot[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = () => Promise.all([fetchUsers(), listRobots()]).then(([u, r]) => {
+    setUsers(u);
+    setRobots(r);
+    setLoaded(true);
+  });
 
   useEffect(() => {
-    Promise.all([fetchUsers(), listRobots()]).then(([u, r]) => {
-      setUsers(u);
-      setRobots(r);
-      setLoaded(true);
-    });
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const admins = useMemo(() => users.filter((u) => u.role === 'admin'), [users]);
   const clients = useMemo(() => users.filter((u) => u.role === 'client'), [users]);
@@ -44,11 +59,36 @@ export function Gestion() {
   // flash and no empty form lists before the fetch resolves.
   if (!loaded) return <GestionSkeleton />;
 
-  if (user?.role === 'superadmin') {
-    return <SuperadminView users={users} robots={robots} admins={admins} setUsers={setUsers} setRobots={setRobots} />;
-  }
-  // admin
-  return <AdminView users={users} robots={robots} clients={clients} meId={user?.id ?? ''} setUsers={setUsers} />;
+  return (
+    <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
+      {/* breadcrumb + title + description, same pattern as Rapports */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted">
+            <Users size={13} />
+            {t('mgmt.header.breadcrumb')}
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('mgmt.header.breadcrumb')}</h1>
+          <p className="mt-1 text-sm text-muted">{t('mgmt.header.subtitle')}</p>
+        </div>
+        <button
+          type="button"
+          onClick={refresh}
+          disabled={refreshing}
+          className="flex items-center gap-2 rounded-btn border border-border px-3 py-2 text-sm text-muted transition-colors hover:border-accent hover:text-text disabled:opacity-60"
+        >
+          <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+          {t('reports.refresh')}
+        </button>
+      </div>
+
+      {user?.role === 'superadmin' ? (
+        <SuperadminView users={users} robots={robots} admins={admins} setUsers={setUsers} setRobots={setRobots} />
+      ) : (
+        <AdminView users={users} robots={robots} clients={clients} meId={user?.id ?? ''} setUsers={setUsers} />
+      )}
+    </div>
+  );
 }
 
 // ── Superadmin: assign robots to admins ──────────────────────────────────────
@@ -79,24 +119,24 @@ function SuperadminView({
   const unassigned = robots.filter((r) => adminIdOf(users, r.id) === null).length;
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6">
-      <CreationPanel onUsers={setUsers} onRobots={setRobots} />
-
+    <>
       <div className="grid grid-cols-3 gap-4">
         <StatBox label={t('mgmt.stat.robots')} value={robots.length} />
         <StatBox label={t('mgmt.stat.admins')} value={admins.length} />
         <StatBox label={t('mgmt.stat.unassigned')} value={unassigned} />
       </div>
 
+      <CreationPanel onUsers={setUsers} onRobots={setRobots} />
+
       <Section title={t('mgmt.admins.title')} subtitle={t('mgmt.admins.subtitle')}>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[560px] border-collapse text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted">
-                <th className="pb-2 pr-4 font-medium">{t('mgmt.admins.col.name')}</th>
-                <th className="pb-2 pr-4 font-medium">{t('mgmt.admins.col.email')}</th>
-                <th className="pb-2 pr-4 font-medium">{t('mgmt.admins.col.robots')}</th>
-                <th className="pb-2 font-medium">{t('mgmt.admins.col.actions')}</th>
+              <tr className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted">
+                <th className="py-2 pr-4 font-medium">{t('mgmt.admins.col.name')}</th>
+                <th className="py-2 pr-4 font-medium">{t('mgmt.admins.col.email')}</th>
+                <th className="py-2 pr-4 font-medium">{t('mgmt.admins.col.robots')}</th>
+                <th className="py-2 pr-1 text-right font-medium">{t('mgmt.admins.col.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -104,20 +144,20 @@ function SuperadminView({
                 const count = a.assignedRobotIds.length;
                 const canDelete = admins.length > 1;
                 return (
-                  <tr key={a.id} className="group">
-                    <td className="py-3 pr-4 font-medium text-text">{a.name}</td>
-                    <td className="py-3 pr-4 text-muted">{a.email}</td>
-                    <td className="py-3 pr-4">
+                  <tr key={a.id} className="h-[60px] transition-colors hover:bg-surface-2/60">
+                    <td className="py-2.5 pr-4 font-medium text-text">{a.name}</td>
+                    <td className="py-2.5 pr-4 text-muted">{a.email}</td>
+                    <td className="py-2.5 pr-4">
                       <span className={count === 0 ? 'text-warning' : 'text-text'}>
                         {count} robot{count !== 1 ? 's' : ''}
                       </span>
                     </td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-2">
+                    <td className="py-2.5 pr-1">
+                      <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => setAdminToAssign(a)}
-                          className="rounded-btn border border-border px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent"
+                          className="rounded-btn border border-border px-2.5 py-1.5 text-xs font-medium text-text transition-colors hover:border-accent hover:text-accent"
                         >
                           {t('mgmt.admins.manage')}
                         </button>
@@ -126,7 +166,7 @@ function SuperadminView({
                             type="button"
                             aria-label={t('mgmt.admins.deleteAria', { name: a.name })}
                             onClick={() => setAdminToDelete(a)}
-                            className="rounded p-1 text-muted opacity-0 transition-opacity hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
+                            className="rounded p-1.5 text-muted transition-colors hover:text-danger"
                           >
                             <TrashIcon />
                           </button>
@@ -157,7 +197,7 @@ function SuperadminView({
           onClose={() => setAdminToAssign(null)}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -178,6 +218,7 @@ function AdminView({
   const t = useT();
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [newPwd, setNewPwd] = useState('');
   const [createFor, setCreateFor] = useState<string | null>(null);
   const [clientToDelete, setClientToDelete] = useState<User | null>(null);
 
@@ -192,11 +233,12 @@ function AdminView({
 
   const createAndAssign = async (rid: string) => {
     if (!newName.trim() || !newEmail.trim()) return;
-    const updated = await createClientUser(newName.trim(), newEmail.trim());
+    const updated = await createClientUser(newName.trim(), newEmail.trim(), newPwd.trim() || undefined);
     const created = [...updated].reverse().find((u) => u.email === newEmail.trim());
     if (created) setUsers(await setClientAssignment(rid, created.id));
     setNewName('');
     setNewEmail('');
+    setNewPwd('');
     setCreateFor(null);
   };
 
@@ -207,7 +249,7 @@ function AdminView({
   };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <>
       <Section title={t('mgmt.myrobots.title')} subtitle={t('mgmt.myrobots.subtitle')}>
         {myRobots.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted">{t('mgmt.myrobots.none')}</p>
@@ -216,7 +258,7 @@ function AdminView({
             {myRobots.map((r) => {
               const current = clientOf(users, r.id);
               return (
-                <div key={r.id} className="rounded-btn border border-border p-3">
+                <div key={r.id} className="rounded-btn border border-border p-3 transition-colors hover:bg-surface-2/60">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="text-sm font-medium">
                       {r.name} <span className="text-muted">({r.id})</span>
@@ -277,6 +319,13 @@ function AdminView({
                         onChange={(e) => setNewEmail(e.target.value)}
                         className="rounded-btn border border-border bg-surface-2 px-2 py-1.5 text-sm"
                       />
+                      <input
+                        type="password"
+                        placeholder={t('mgmt.form.password')}
+                        value={newPwd}
+                        onChange={(e) => setNewPwd(e.target.value)}
+                        className="rounded-btn border border-border bg-surface-2 px-2 py-1.5 text-sm"
+                      />
                       <button type="button" onClick={() => createAndAssign(r.id)} className="btn-accent px-3 py-1.5 text-sm">
                         {t('mgmt.myrobots.createAssign')}
                       </button>
@@ -291,23 +340,34 @@ function AdminView({
 
       {clients.length > 0 && (
         <Section title={t('mgmt.clients.title')} subtitle={t('mgmt.clients.subtitle')}>
-          <div className="divide-y divide-border">
-            {clients.map((c) => (
-              <div key={c.id} className="group flex items-center gap-3 py-2.5 text-sm">
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium text-text">{c.name}</div>
-                  <div className="text-xs text-muted">{c.email}</div>
-                </div>
-                <button
-                  type="button"
-                  aria-label={t('mgmt.clients.deleteAria', { name: c.name })}
-                  onClick={() => setClientToDelete(c)}
-                  className="rounded p-1 text-muted opacity-0 transition-opacity hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
-                >
-                  <TrashIcon />
-                </button>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[420px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-[11px] uppercase tracking-wider text-muted">
+                  <th className="py-2 pr-4 font-medium">{t('mgmt.clients.col.name')}</th>
+                  <th className="py-2 pr-4 font-medium">{t('mgmt.clients.col.email')}</th>
+                  <th className="py-2 pr-1 text-right font-medium">{t('mgmt.clients.col.actions')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {clients.map((c) => (
+                  <tr key={c.id} className="h-[60px] transition-colors hover:bg-surface-2/60">
+                    <td className="py-2.5 pr-4 font-medium text-text">{c.name}</td>
+                    <td className="py-2.5 pr-4 text-muted">{c.email}</td>
+                    <td className="py-2.5 pr-1 text-right">
+                      <button
+                        type="button"
+                        aria-label={t('mgmt.clients.deleteAria', { name: c.name })}
+                        onClick={() => setClientToDelete(c)}
+                        className="rounded p-1.5 text-muted transition-colors hover:text-danger"
+                      >
+                        <TrashIcon />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </Section>
       )}
@@ -319,7 +379,7 @@ function AdminView({
         onConfirm={handleDeleteClient}
         onCancel={() => setClientToDelete(null)}
       />
-    </div>
+    </>
   );
 }
 
@@ -360,12 +420,17 @@ const inputCls = 'w-full rounded-btn border border-border bg-surface-2 px-3 py-1
 function CreationPanel({ onUsers, onRobots }: { onUsers: (u: User[]) => void; onRobots: (r: Robot[]) => void }) {
   const t = useT();
   return (
-    <Section title={t('mgmt.add.title')} subtitle={t('mgmt.add.subtitle')}>
+    <section className="surface-card p-card">
+      <div className="mb-4 flex items-center gap-2 text-[15px]">
+        <UserPlus size={16} className="text-accent" />
+        <span className="font-medium">{t('mgmt.add.title')}</span>
+        <span className="text-muted">— {t('mgmt.add.subtitle')}</span>
+      </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <UserForm role="admin" title={t('mgmt.form.addAdmin')} onDone={onUsers} />
         <RobotForm onDone={onRobots} />
       </div>
-    </Section>
+    </section>
   );
 }
 

@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import type { StatsBundle } from '../services/mock';
+import type { StatsBundle } from '../types/contract';
 
 // Which KPIs the user ticked to include.
 export type ReportSelection = {

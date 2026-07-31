@@ -20,8 +20,6 @@ export function BatteryCard({ battery, fill }: { battery: number; fill?: string 
           {battery}%
         </span>
       </div>
-
-      <p className="card-subtext mt-2">{t('battery.dock.label')}</p>
     </div>
   );
 }
