@@ -6,10 +6,21 @@ PDF/CSV reports, derived from ~2 years of real robots logs.
 
 ## Stack
 
-- **Frontend:** React 18 · TypeScript · Vite · Tailwind CSS · Recharts ·
-  react-leaflet · react-router · jsPDF
-- **Backend:** Django 6 · Django REST Framework · Simple JWT · PostgreSQL ·
-  django-cors-headers
+**Frontend:**
+
+- React 18.3.1 (Vite, TypeScript)
+- Tailwind CSS 3.4.14
+- Recharts pour visualisations
+- Lucide React pour les icônes
+- react-leaflet, react-router, jsPDF
+
+**Backend:**
+
+- Django 6
+- Django REST Framework
+- Simple JWT
+- PostgreSQL
+- django-cors-headers
 
 ## Quick start
 
