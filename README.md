@@ -10,17 +10,17 @@ PDF/CSV reports, derived from ~2 years of real robots logs.
 
 - React 18.3.1 (Vite, TypeScript)
 - Tailwind CSS 3.4.14
-- Recharts pour visualisations
-- Lucide React pour les icônes
-- react-leaflet, react-router, jsPDF
+- Recharts for visualisations
+- Lucide React for icons
+- react-leaflet for maps, react-router for routing, jsPDF for PDF reports
 
 **Backend:**
 
 - Django 6
 - Django REST Framework
-- Simple JWT
-- PostgreSQL
-- django-cors-headers
+- Simple JWT for authentication
+- PostgreSQL for the database
+- django-cors-headers for CORS
 
 ## Quick start
 
